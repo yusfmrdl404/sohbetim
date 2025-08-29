@@ -6,11 +6,35 @@
   <meta name="theme-color" content="#075e54" />
   <title>🔐 Sohbetim</title>
 
-  <!-- PWA Manifest -->
-  <link rel="manifest" href='data:application/json,{"name": "Sohbetim", "short_name": "Sohbet", "start_url": ".", "display": "standalone", "background_color": "#075e54", "theme_color": "#075e54", "icons": [{"src": "https://ui-avatars.com/api/?name=S", "sizes": "192x192", "type": "image/png"}]}'>
-
   <!-- Bildirim sesi -->
   <audio id="notificationSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" preload="auto"></audio>
+
+  <!-- PWA Manifest (Düzeltildi: Dinamik olarak ekle) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const manifest = {
+        "name": "Sohbetim",
+        "short_name": "Sohbet",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#075e54",
+        "theme_color": "#075e54",
+        "icons": [
+          {
+            "src": "https://ui-avatars.com/api/?name=S",
+            "sizes": "192x192",
+            "type": "image/png"
+          }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = url;
+      document.head.appendChild(link);
+    });
+  </script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -395,7 +419,7 @@
 
       <!-- Arama -->
       <div class="search-box" style="display:none;">
-        <input type="text" id="searchInput" placeholder="Mesaj ara...">
+        <input type="text" id="searchInput" placeholder="Mesaj ara..." oninput="searchMessages()">
         <button onclick="closeSearch()" class="btn btn-sm">X</button>
       </div>
 
@@ -403,7 +427,7 @@
       <div class="input-area">
         <button id="attachBtn" onclick="document.getElementById('fileInput').click()">📎</button>
         <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="sendFile(this)">
-        <input type="text" id="messageInput" placeholder="Mesaj yaz...">
+        <input type="text" id="messageInput" placeholder="Mesaj yaz..." onkeydown="if(event.key==='Enter')sendMessage()">
         <button id="sendBtn" onclick="sendMessage()">Gönder</button>
       </div>
     </div>
@@ -462,6 +486,13 @@
       }
     });
 
+    // Ekran göster
+    function showScreen(id) {
+      document.querySelectorAll('#auth, #chatScreen, #settingsScreen').forEach(el => {
+        el.style.display = el.id === id ? 'block' : 'none';
+      });
+    }
+
     // Oturum kontrolü
     auth.onAuthStateChanged(user => {
       if (user) {
@@ -494,12 +525,6 @@
       }
     });
 
-    function showScreen(id) {
-      document.querySelectorAll('#auth, #chatScreen, #settingsScreen').forEach(el => {
-        el.style.display = el.id === id ? 'block' : 'none';
-      });
-    }
-
     // Kullanıcı listesi (kendini gizle)
     function loadUserList() {
       db.ref("users").on("value", (snapshot) => {
@@ -520,11 +545,12 @@
 
     // Grup listesi
     function loadGroupList() {
-      db.ref("groups").orderByChild("members").equalTo(currentUser.uid).on("value", (snapshot) => {
+      db.ref("groups").on("value", (snapshot) => {
         const list = document.getElementById("groupList");
         list.innerHTML = "";
         snapshot.forEach((child) => {
           const data = child.val();
+          if (!data.members?.includes(currentUser.uid)) return;
           const item = document.createElement("div");
           item.className = "group-item";
           item.innerHTML = `<img src="${data.photoURL || 'https://ui-avatars.com/api/?name=G'}"><div><strong>${data.name}</strong></div>`;
@@ -534,6 +560,7 @@
       });
     }
 
+    // Grup oluştur
     function createGroup() {
       const name = prompt("Grup adı?");
       if (!name) return;
@@ -546,6 +573,7 @@
       });
     }
 
+    // Sohbet başlat
     function startChat(id, type) {
       chatType = type;
       if (type === "user") {
@@ -562,8 +590,9 @@
       loadMessages();
     }
 
+    // Mesajları yükle
     function loadMessages() {
-      const ref = chatType === "user" 
+      const ref = chatType === "user"
         ? db.ref("chats/" + [currentUser.uid, otherUserId].sort().join("_"))
         : db.ref("groupChats/" + currentGroupId);
 
@@ -594,6 +623,7 @@
       });
     }
 
+    // Mesaj gönder
     async function sendMessage() {
       const input = document.getElementById("messageInput");
       const text = input.value.trim();
@@ -612,6 +642,7 @@
       input.value = "";
     }
 
+    // Fotoğraf gönder
     function sendFile(input) {
       const file = input.files[0];
       if (!file || file.size > 2 * 1024 * 1024) return;
@@ -630,6 +661,7 @@
       input.value = "";
     }
 
+    // Hesap ayarları
     function openSettings() {
       showScreen('settingsScreen');
     }
@@ -669,6 +701,7 @@
       }
     }
 
+    // Mesaj ara
     function searchMessages() {
       const term = document.getElementById("searchInput").value.toLowerCase();
       const messages = document.querySelectorAll("#chatArea .msg");
@@ -688,7 +721,8 @@
     // E-posta doğrulama (3 saatte 1 kere)
     function resendVerification() {
       const user = auth.currentUser;
-      const last = localStorage.getItem("lastResend_" + user.email);
+      const email = user.email;
+      const last = localStorage.getItem("lastResend_" + email);
       const now = Date.now();
       if (last && now - last < 3 * 60 * 60 * 1000) {
         const left = Math.ceil((3 * 60 * 60 * 1000 - (now - last)) / 60000);
@@ -696,14 +730,15 @@
         return;
       }
       user.sendEmailVerification().then(() => {
-        localStorage.setItem("lastResend_" + user.email, now);
+        localStorage.setItem("lastResend_" + email, now);
         startResendTimer();
         showAlert("success", "Doğrulama maili gönderildi.", "success");
-      });
+      }).catch(e => showAlert("error", e.message, "error"));
     }
 
     function startResendTimer() {
-      const email = document.getElementById("loginEmail").value;
+      const email = document.getElementById("loginEmail").value || (auth.currentUser?.email);
+      if (!email) return;
       const last = localStorage.getItem("lastResend_" + email);
       if (!last) return;
       const diff = 3 * 60 * 60 * 1000 - (Date.now() - last);
@@ -738,8 +773,6 @@
         return new TextDecoder().decode(decrypted);
       } catch { return "[Şifreli]"; }
     }
-
-    document.getElementById("messageInput")?.addEventListener("keydown", e => e.key === "Enter" && sendMessage());
   </script>
 </body>
 </html>
