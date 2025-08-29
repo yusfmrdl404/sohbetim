@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sohbet Sitem</title>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial; margin: 30px; }
+    #auth, #chat { margin-top: 20px; }
+    input, button { padding: 8px; margin: 5px; }
+    #messages { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin: 10px 0; }
+    .msg { padding: 5px; margin: 5px 0; background: #f0f0f0; }
+  </style>
+</head>
+<body>
+
+  <h1>Sohbet Sitem</h1>
+
+  <!-- Giriş / Kayıt -->
+  <div id="auth">
+    <input type="email" id="email" placeholder="E-posta">
+    <input type="text" id="username" placeholder="ID (kullanıcı adı)">
+    <input type="password" id="password" placeholder="Şifre">
+    <button onclick="register()">Kayıt Ol</button>
+    <button onclick="login()">Giriş Yap</button>
+    <button onclick="logout()" style="display:none">Çıkış</button>
+  </div>
+
+  <!-- Sohbet -->
+  <div id="chat" style="display:none">
+    <h3>Hoş geldin, <span id="userLabel"></span>!</h3>
+    <input type="text" id="searchId" placeholder="ID ile kişi ara">
+    <button onclick="startChat()">Mesaj Başlat</button>
+    <div id="messages"></div>
+    <input type="text" id="message" placeholder="Mesaj yaz">
+    <button onclick="sendMessage()">Gönder</button>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+    // 🔥 BURAYA KENDİ FİRABASE BİLGİNİ YAPISHTIR
+    const firebaseConfig = {
+
+  apiKey: "AIzaSyCICiMDhK5MkQDq4dbV_9jkDMt4n3MUpEg",
+
+  authDomain: "sohbetim-9a9d7.firebaseapp.com",
+
+  databaseURL: "https://sohbetim-9a9d7-default-rtdb.europe-west1.firebasedatabase.app",
+
+  projectId: "sohbetim-9a9d7",
+
+  storageBucket: "sohbetim-9a9d7.firebasestorage.app",
+
+  messagingSenderId: "277333150871",
+
+  appId: "1:277333150871:web:d923f8cddb19ec2f672dd2",
+
+  measurementId: "G-G5FXCJYWMC"
+
+};
+
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentUser = null;
+    let chatWith = null;
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        document.getElementById("auth").style.display = "none";
+        document.getElementById("chat").style.display = "block";
+        document.getElementById("userLabel").innerText = localStorage.username || "Misafir";
+        loadMessages();
+      } else {
+        document.getElementById("chat").style.display = "none";
+        document.getElementById("auth").style.display = "block";
+      }
+    });
+
+    function register() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const username = document.getElementById("username").value;
+
+      if (!username) return alert("ID gir!");
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          localStorage.username = username;
+          db.ref("users/" + auth.currentUser.uid).set({ username });
+        });
+    }
+
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          const username = prompt("ID'n (kullanıcı adın) nedir?");
+          localStorage.username = username;
+        });
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+
+    function startChat() {
+      chatWith = document.getElementById("searchId").value;
+      if (!chatWith) return alert("ID gir!");
+      loadMessages();
+    }
+
+    function sendMessage() {
+      if (!chatWith || !currentUser) return;
+      const message = document.getElementById("message").value;
+      const ref = db.ref("chats/" + [currentUser.uid, chatWith].sort().join("_"));
+      ref.push({
+        from: localStorage.username,
+        text: message,
+        time: Date.now()
+      });
+      document.getElementById("message").value = "";
+    }
+
+    function loadMessages() {
+      if (!chatWith || !currentUser) return;
+      const ref = db.ref("chats/" + [currentUser.uid, chatWith].sort().join("_"));
+      ref.limitToLast(50).on("value", snap => {
+        const msgDiv = document.getElementById("messages");
+        msgDiv.innerHTML = "";
+        snap.forEach(child => {
+          const data = child.val();
+          const el = document.createElement("div");
+          el.className = "msg";
+          el.innerHTML = `<b>${data.from}</b>: ${data.text}`;
+          msgDiv.appendChild(el);
+        });
+        msgDiv.scrollTop = msgDiv.scrollHeight;
+      });
+    }
+  </script>
+</body>
+</html>
