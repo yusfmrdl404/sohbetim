@@ -35,34 +35,25 @@
     <button onclick="sendMessage()">Gönder</button>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK (boşluksuz ve doğru) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script>
-    // 🔥 BURAYA KENDİ FİRABASE BİLGİNİ YAPISHTIR
+    // Firebase yapılandırması
     const firebaseConfig = {
-
-  apiKey: "AIzaSyCICiMDhK5MkQDq4dbV_9jkDMt4n3MUpEg",
-
-  authDomain: "sohbetim-9a9d7.firebaseapp.com",
-
-  databaseURL: "https://sohbetim-9a9d7-default-rtdb.europe-west1.firebasedatabase.app",
-
-  projectId: "sohbetim-9a9d7",
-
-  storageBucket: "sohbetim-9a9d7.firebasestorage.app",
-
-  messagingSenderId: "277333150871",
-
-  appId: "1:277333150871:web:d923f8cddb19ec2f672dd2",
-
-  measurementId: "G-G5FXCJYWMC"
-
-};
-
+      apiKey: "AIzaSyCICiMDhK5MkQDq4dbV_9jkDMt4n3MUpEg",
+      authDomain: "sohbetim-9a9d7.firebaseapp.com",
+      databaseURL: "https://sohbetim-9a9d7-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "sohbetim-9a9d7",
+      storageBucket: "sohbetim-9a9d7.firebasestorage.app",
+      messagingSenderId: "277333150871",
+      appId: "1:277333150871:web:d923f8cddb19ec2f672dd2",
+      measurementId: "G-G5FXCJYWMC"
     };
+
+    // Firebase'i başlat
     firebase.initializeApp(firebaseConfig);
 
     const auth = firebase.auth();
@@ -71,6 +62,7 @@
     let currentUser = null;
     let chatWith = null;
 
+    // Oturum durumu kontrolü
     auth.onAuthStateChanged(user => {
       if (user) {
         currentUser = user;
@@ -84,66 +76,95 @@
       }
     });
 
+    // Kayıt ol
     function register() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
       const username = document.getElementById("username").value;
 
-      if (!username) return alert("ID gir!");
+      if (!username) return alert("Lütfen bir ID (kullanıcı adı) girin!");
 
       auth.createUserWithEmailAndPassword(email, password)
         .then(() => {
           localStorage.username = username;
           db.ref("users/" + auth.currentUser.uid).set({ username });
+          alert("Kayıt başarılı! Artık sohbet edebilirsin.");
+        })
+        .catch(error => {
+          alert("Hata: " + error.message);
         });
     }
 
+    // Giriş yap
     function login() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
+      if (!email || !password) return alert("E-posta ve şifre girin!");
+
       auth.signInWithEmailAndPassword(email, password)
         .then(() => {
-          const username = prompt("ID'n (kullanıcı adın) nedir?");
-          localStorage.username = username;
+          const username = prompt("ID'niz (kullanıcı adınız) nedir?");
+          if (username) {
+            localStorage.username = username;
+          }
+        })
+        .catch(error => {
+          alert("Hata: " + error.message);
         });
     }
 
+    // Çıkış yap
     function logout() {
       auth.signOut();
+      localStorage.removeItem("username");
     }
 
+    // Sohbet başlat
     function startChat() {
       chatWith = document.getElementById("searchId").value;
-      if (!chatWith) return alert("ID gir!");
+      if (!chatWith) return alert("Lütfen bir ID girin!");
       loadMessages();
     }
 
+    // Mesaj gönder
     function sendMessage() {
       if (!chatWith || !currentUser) return;
-      const message = document.getElementById("message").value;
-      const ref = db.ref("chats/" + [currentUser.uid, chatWith].sort().join("_"));
-      ref.push({
+
+      const messageInput = document.getElementById("message");
+      const message = messageInput.value.trim();
+
+      if (!message) return;
+
+      const chatRef = db.ref("chats/" + [currentUser.uid, chatWith].sort().join("_"));
+      chatRef.push({
         from: localStorage.username,
         text: message,
         time: Date.now()
       });
-      document.getElementById("message").value = "";
+
+      messageInput.value = "";
     }
 
+    // Mesajları yükle
     function loadMessages() {
       if (!chatWith || !currentUser) return;
-      const ref = db.ref("chats/" + [currentUser.uid, chatWith].sort().join("_"));
-      ref.limitToLast(50).on("value", snap => {
+
+      const chatKey = [currentUser.uid, chatWith].sort().join("_");
+      const chatRef = db.ref("chats/" + chatKey);
+
+      chatRef.limitToLast(50).on("value", (snapshot) => {
         const msgDiv = document.getElementById("messages");
         msgDiv.innerHTML = "";
-        snap.forEach(child => {
-          const data = child.val();
-          const el = document.createElement("div");
-          el.className = "msg";
-          el.innerHTML = `<b>${data.from}</b>: ${data.text}`;
-          msgDiv.appendChild(el);
+
+        snapshot.forEach((childSnapshot) => {
+          const data = childSnapshot.val();
+          const msgEl = document.createElement("div");
+          msgEl.className = "msg";
+          msgEl.innerHTML = `<b>${data.from}</b>: ${data.text}`;
+          msgDiv.appendChild(msgEl);
         });
+
         msgDiv.scrollTop = msgDiv.scrollHeight;
       });
     }
