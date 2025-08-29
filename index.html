@@ -154,10 +154,6 @@
       border-radius: 50%;
       object-fit: cover;
     }
-    .user-item small {
-      font-size: 12px;
-      color: gray;
-    }
     .form {
       padding: 20px;
       text-align: center;
@@ -315,10 +311,9 @@
     // Koyu/Açık tema geçişi
     function toggleDarkMode() {
       const body = document.body;
-      const container = document.querySelector('.container');
       const isDark = body.classList.toggle('dark-mode');
-      const button = event.target;
-      button.innerText = isDark ? '☀️' : '🌙';
+      const buttons = document.querySelectorAll('button[onclick*="toggleDarkMode"]');
+      buttons.forEach(b => b.innerText = isDark ? '☀️' : '🌙');
       localStorage.setItem('darkMode', isDark);
     }
 
@@ -343,10 +338,8 @@
         }
 
         currentUser = user;
-        document.getElementById("auth").style.display = "none";
-        document.getElementById("chatScreen").style.display = "block";
-        document.getElementById("resendSection").style.display = "none";
 
+        // Kullanıcı adını localStorage'dan al
         if (!localStorage.username) {
           const name = prompt("Kullanıcı adınız (ID) nedir?");
           if (name) {
@@ -359,6 +352,11 @@
         } else {
           currentUsername = localStorage.username;
         }
+
+        // Sohbet ekranını göster
+        document.getElementById("auth").style.display = "none";
+        document.getElementById("chatScreen").style.display = "block";
+        document.getElementById("resendSection").style.display = "none";
 
         // Online olarak işaretle
         db.ref("users/" + user.uid).update({ online: true });
@@ -378,7 +376,7 @@
       }
     });
 
-    // Kullanıcı listesi
+    // Kullanıcı listesi (KENDİNİ GÖSTERME)
     function loadUserList() {
       const usersRef = db.ref("users");
       const userList = document.getElementById("userList");
@@ -386,32 +384,44 @@
 
       usersRef.on("value", (snapshot) => {
         userList.innerHTML = "";
-        if (snapshot.exists()) {
-          snapshot.forEach((child) => {
-            const userId = child.key;
-            const data = child.val();
-            const username = data.username;
-            const photoURL = data.photoURL || `https://ui-avatars.com/api/?name=${username}`;
-            const isOnline = data.online;
+        let hasUsers = false;
 
-            const userItem = document.createElement("div");
-            userItem.className = "user-item";
-            userItem.innerHTML = `
-              <img src="${photoURL}" alt="pp" style="width: 32px; height: 32px; border-radius: 50%;">
-              <div style="flex:1;">
-                <strong>${username}</strong>
-                <div style="font-size:12px; color: ${isOnline ? 'green' : 'gray'};">● ${isOnline ? 'Online' : 'Offline'}</div>
-              </div>
-            `;
-            userItem.onclick = () => {
-              otherUserId = userId;
-              document.getElementById("chatWithUser").innerText = username;
-              loadMessages();
-            };
-            userList.appendChild(userItem);
-          });
-        } else {
-          userList.innerHTML = "<em>Henüz kullanıcı yok</em>";
+        snapshot.forEach((child) => {
+          const userId = child.key;
+          const data = child.val();
+
+          // 🔒 KENDİNİ ATLA
+          if (currentUser && userId === currentUser.uid) {
+            return;
+          }
+
+          hasUsers = true;
+
+          const username = data.username;
+          const photoURL = data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`;
+          const isOnline = data.online;
+
+          const userItem = document.createElement("div");
+          userItem.className = "user-item";
+          userItem.innerHTML = `
+            <img src="${photoURL}" alt="pp" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+            <div style="flex:1;">
+              <strong>${username}</strong>
+              <div style="font-size:12px; color: ${isOnline ? 'green' : 'gray'};">● ${isOnline ? 'Online' : 'Offline'}</div>
+            </div>
+          `;
+
+          userItem.onclick = () => {
+            otherUserId = userId;
+            document.getElementById("chatWithUser").innerText = username;
+            loadMessages();
+          };
+
+          userList.appendChild(userItem);
+        });
+
+        if (!hasUsers) {
+          userList.innerHTML = "<em>Henüz başka kullanıcı yok</em>";
         }
       });
     }
@@ -421,7 +431,7 @@
       const email = document.getElementById("registerEmail").value;
       const password = document.getElementById("registerPassword").value;
       const username = document.getElementById("registerUsername").value;
-      const photoURL = prompt("Profil resmin (URL) varsa gir, yoksa boş bırak", `https://ui-avatars.com/api/?name=${username}`);
+      const photoURL = prompt("Profil resmin (URL) varsa gir, yoksa boş bırak", `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`);
 
       if (!username) return showAlert("error", "Kullanıcı adı girin!", "error");
 
@@ -435,7 +445,7 @@
             username: username,
             email: email,
             emailVerified: false,
-            photoURL: photoURL || `https://ui-avatars.com/api/?name=${username}`,
+            photoURL: photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`,
             online: false
           });
 
@@ -461,19 +471,16 @@
             return;
           }
 
-          const name = prompt("Kullanıcı adınız (ID) nedir?");
-          if (name) {
-            localStorage.username = name;
-            currentUsername = name;
-          } else {
-            logout();
-            return;
+          if (!localStorage.username) {
+            const name = prompt("Kullanıcı adınız (ID) nedir?");
+            if (name) {
+              localStorage.username = name;
+              currentUsername = name;
+            } else {
+              logout();
+              return;
+            }
           }
-
-          db.ref("users/" + user.uid).once("value", (snap) => {
-            const data = snap.val();
-            localStorage.photoURL = data?.photoURL || `https://ui-avatars.com/api/?name=${name}`;
-          });
         })
         .catch(e => showAlert("error", e.message, "error"));
     }
@@ -508,7 +515,7 @@
       showAlert("success", "Çıkış yapıldı.", "success");
     }
 
-    // Şifreleme
+    // Şifreleme (AES-GCM)
     async function encrypt(text) {
       const encoder = new TextEncoder();
       const data = encoder.encode(text);
