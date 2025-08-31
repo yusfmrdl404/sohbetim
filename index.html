@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sohbetim - Modern Sohbet Uygulaması</title>
+    <title>Sohbetim - Gerçek Zamanlı Sohbet</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,7 +12,7 @@
         <div class="logo">
             <i class="fas fa-comments"></i>
             <h1>Sohbetim</h1>
-            <p>Daha akıllı, daha hızlı, daha güvenli</p>
+            <p>Gerçek zamanlı, güvenli ve akıllı sohbet</p>
         </div>
         
         <div class="auth-container">
@@ -51,7 +51,7 @@
                     <form id="register-form">
                         <div class="input-group">
                             <i class="fas fa-user"></i>
-                            <input type="text" placeholder="Ad Soyad" required>
+                            <input type="text" placeholder="Kullanıcı Adı" required minlength="3" maxlength="20">
                         </div>
                         <div class="input-group">
                             <i class="fas fa-envelope"></i>
@@ -82,9 +82,15 @@
                 <i class="fas fa-robot"></i>
             </div>
             <div class="assistant-chat">
-                <div class="chat-bubble">Merhaba! Size nasıl yardımcı olabilirim?</div>
+                <div class="chat-header">
+                    <h3>AI Asistan</h3>
+                    <span class="status active"><i class="fas fa-circle"></i> Çevrimiçi</span>
+                </div>
+                <div class="chat-messages">
+                    <div class="chat-bubble ai">Merhaba! Size nasıl yardımcı olabilirim?</div>
+                </div>
                 <div class="chat-input">
-                    <input type="text" placeholder="Yardım için sorun...">
+                    <input type="text" placeholder="AI asistana sorun...">
                     <button><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
@@ -185,7 +191,7 @@
                                 const user = result.user;
                                 
                                 // Kullanıcı verilerini veritabanına kaydet
-                                saveUserToDatabase(user);
+                                saveUserToDatabase(user, user.displayName || user.email.split('@')[0]);
                                 
                                 // Kullanıcıyı sohbet sayfasına yönlendir
                                 window.location.href = 'chat.html';
@@ -203,7 +209,7 @@
                 registerForm.addEventListener('submit', (e) => {
                     e.preventDefault();
                     
-                    const fullName = registerForm.querySelector('input[type="text"]').value;
+                    const username = registerForm.querySelector('input[type="text"]').value;
                     const email = registerForm.querySelector('input[type="email"]').value;
                     const password = registerForm.querySelector('input[type="password"]:first-of-type').value;
                     const confirmPassword = registerForm.querySelector('input[type="password"]:last-of-type').value;
@@ -214,22 +220,25 @@
                         return;
                     }
                     
-                    // Kullanıcı oluştur
-                    auth.createUserWithEmailAndPassword(email, password)
-                        .then((userCredential) => {
-                            const user = userCredential.user;
-                            
-                            // Profil güncelleme
-                            user.updateProfile({
-                                displayName: fullName
-                            }).then(() => {
+                    // Kullanıcı adı kontrolü
+                    db.ref('usernames').once('value', (snapshot) => {
+                        if (snapshot.hasChild(username)) {
+                            alert('Bu kullanıcı adı zaten kullanımda!');
+                            return;
+                        }
+                        
+                        // Kullanıcı oluştur
+                        auth.createUserWithEmailAndPassword(email, password)
+                            .then((userCredential) => {
+                                const user = userCredential.user;
+                                
                                 // E-posta doğrulama gönder
                                 user.sendEmailVerification()
                                     .then(() => {
                                         alert('Kayıt başarılı! Lütfen e-posta adresinize gönderilen doğrulama linkine tıklayarak hesabınızı aktifleştirin.');
                                         
                                         // Kullanıcı verilerini veritabanına kaydet
-                                        saveUserToDatabase(user, fullName);
+                                        saveUserToDatabase(user, username);
                                         
                                         // Giriş ekranına yönlendir
                                         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -237,46 +246,54 @@
                                         document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
                                         document.getElementById('login-panel').classList.add('active');
                                     });
+                            })
+                            .catch((error) => {
+                                let errorMessage = 'Kayıt sırasında bir hata oluştu.';
+                                
+                                if (error.code === 'auth/email-already-in-use') {
+                                    errorMessage = 'Bu e-posta adresi zaten kullanımda!';
+                                } else if (error.code === 'auth/invalid-email') {
+                                    errorMessage = 'Geçersiz e-posta!';
+                                } else if (error.code === 'auth/weak-password') {
+                                    errorMessage = 'Şifre çok zayıf! En az 6 karakter olmalı.';
+                                }
+                                
+                                alert(errorMessage);
                             });
-                        })
-                        .catch((error) => {
-                            let errorMessage = 'Kayıt sırasında bir hata oluştu.';
-                            
-                            if (error.code === 'auth/email-already-in-use') {
-                                errorMessage = 'Bu e-posta adresi zaten kullanımda!';
-                            } else if (error.code === 'auth/invalid-email') {
-                                errorMessage = 'Geçersiz e-posta!';
-                            } else if (error.code === 'auth/weak-password') {
-                                errorMessage = 'Şifre çok zayıf! En az 6 karakter olmalı.';
-                            }
-                            
-                            alert(errorMessage);
-                        });
+                    });
                 });
             }
             
             // Kullanıcıyı veritabanına kaydet
-            function saveUserToDatabase(user, fullName = '') {
+            function saveUserToDatabase(user, username) {
                 const userId = user.uid;
-                const username = user.email.split('@')[0];
                 
-                db.ref('users/' + userId).set({
-                    uid: userId,
-                    email: user.email,
-                    displayName: fullName || user.displayName || username,
-                    photoURL: user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${username}`,
-                    emailVerified: user.emailVerified,
-                    provider: user.providerData[0].providerId,
-                    lastLogin: firebase.database.ServerValue.TIMESTAMP,
-                    status: 'online',
-                    createdAt: firebase.database.ServerValue.TIMESTAMP
-                });
-                
-                // Aktif kullanıcı listesine ekle
-                db.ref('onlineUsers/' + userId).set({
-                    lastSeen: firebase.database.ServerValue.TIMESTAMP,
-                    status: 'online'
-                });
+                // Kullanıcı adı kontrolü ve kaydı
+                db.ref('usernames/' + username).set(userId)
+                    .then(() => {
+                        // Kullanıcı verilerini kaydet
+                        db.ref('users/' + userId).set({
+                            uid: userId,
+                            email: user.email,
+                            username: username,
+                            displayName: username,
+                            photoURL: `https://api.dicebear.com/7.x/initials/svg?seed=${username}`,
+                            emailVerified: user.emailVerified,
+                            provider: user.providerData[0].providerId,
+                            lastLogin: firebase.database.ServerValue.TIMESTAMP,
+                            status: 'online',
+                            createdAt: firebase.database.ServerValue.TIMESTAMP
+                        });
+                        
+                        // Aktif kullanıcı listesine ekle
+                        db.ref('onlineUsers/' + userId).set({
+                            lastSeen: firebase.database.ServerValue.TIMESTAMP,
+                            status: 'online'
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('Kullanıcı adı kaydedilemedi:', error);
+                    });
             }
             
             // AI Asistan
@@ -284,6 +301,7 @@
             const assistantChat = document.querySelector('.assistant-chat');
             const chatInput = document.querySelector('.chat-input input');
             const chatSendBtn = document.querySelector('.chat-input button');
+            const chatMessages = document.querySelector('.chat-messages');
             
             if (assistantIcon && assistantChat) {
                 assistantIcon.addEventListener('click', () => {
@@ -312,24 +330,71 @@
                 
                 // Kullanıcı mesajını ekle
                 const userMessage = document.createElement('div');
-                userMessage.className = 'chat-bubble';
-                userMessage.style.textAlign = 'right';
-                userMessage.style.borderRadius = '18px 18px 0 18px';
-                userMessage.style.marginLeft = 'auto';
-                userMessage.style.backgroundColor = '#DCF8C6';
+                userMessage.className = 'chat-bubble user';
                 userMessage.textContent = message;
-                document.querySelector('.chat-bubble').parentNode.insertBefore(userMessage, document.querySelector('.chat-bubble').nextSibling);
+                chatMessages.appendChild(userMessage);
                 
                 // Giriş alanını temizle
                 chatInput.value = '';
                 
-                // AI Yanıtı
-                setTimeout(() => {
-                    const aiResponse = document.createElement('div');
-                    aiResponse.className = 'chat-bubble';
-                    aiResponse.textContent = 'Merhaba! Size nasıl yardımcı olabilirim? Bu demo sürümde gerçek AI entegrasyonu yoktur.';
-                    document.querySelector('.chat-bubble').parentNode.insertBefore(aiResponse, document.querySelector('.chat-bubble').nextSibling);
-                }, 1000);
+                // En aşağı kaydır
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // AI Yanıtı (Groq API ile)
+                getGroqResponse(message)
+                    .then(response => {
+                        const aiResponse = document.createElement('div');
+                        aiResponse.className = 'chat-bubble ai';
+                        aiResponse.textContent = response;
+                        chatMessages.appendChild(aiResponse);
+                        
+                        // En aşağı kaydır
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    })
+                    .catch(error => {
+                        console.error("AI hatası:", error);
+                        const aiResponse = document.createElement('div');
+                        aiResponse.className = 'chat-bubble ai';
+                        aiResponse.textContent = 'Üzgünüm, şu anda AI hizmeti kullanılamıyor.';
+                        chatMessages.appendChild(aiResponse);
+                        
+                        // En aşağı kaydır
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    });
+            }
+            
+            // Groq API ile AI Yanıtı Al
+            async function getGroqResponse(message) {
+                try {
+                    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer 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'
+                        },
+                        body: JSON.stringify({
+                            "model": "mixtral-8x7b-32768",
+                            "messages": [
+                                {
+                                    "role": "system",
+                                    "content": "Sen bir sohbet uygulaması asistanısın. Kullanıcıya yardımcı olacak şekilde cevap ver. Cevaplar Türkçe ve kısa olmalı."
+                                },
+                                {
+                                    "role": "user",
+                                    "content": message
+                                }
+                            ],
+                            "temperature": 0.7,
+                            "max_tokens": 512
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    return data.choices[0].message.content;
+                } catch (error) {
+                    console.error("Groq API hatası:", error);
+                    throw error;
+                }
             }
             
             // Auth durumunu izle
