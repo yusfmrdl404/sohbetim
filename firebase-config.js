@@ -1,8 +1,6 @@
-// Firebase App (the core Firebase SDK) is always required
+// Firebase modülleri
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-
-// Add the Firebase services that you want to use
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { getDatabase, ref, set, update, push, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
 // Firebase yapılandırması
@@ -20,25 +18,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
-
-// Auth durumunu takip et
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    // Kullanıcı giriş yaptı
-    console.log("Kullanıcı giriş yaptı:", user.email);
-    
-    // Eğer e-posta doğrulanmamışsa çıkış yap
-    if (!user.emailVerified) {
-      alert("Lütfen e-posta adresinizi doğrulayın!");
-      signOut(auth);
-    }
-  } else {
-    // Kullanıcı çıkış yaptı veya giriş yapmadı
-    console.log("Kullanıcı giriş yapmadı");
-  }
-});
+const googleProvider = new GoogleAuthProvider();
 
 // Dışa aktar
-export { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
-         sendEmailVerification, signOut, GoogleAuthProvider, signInWithPopup,
-         ref, set, update, push, onValue, serverTimestamp };
+export { 
+  auth, 
+  db,
+  googleProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  onAuthStateChanged,
+  signOut,
+  ref,
+  set,
+  update,
+  push,
+  onValue,
+  serverTimestamp
+};
