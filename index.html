@@ -22,6 +22,7 @@
             </div>
             
             <div class="auth-content">
+                <!-- Giriş Ekranı -->
                 <div class="tab-panel active" id="login-panel">
                     <form id="login-form">
                         <div class="input-group">
@@ -45,6 +46,7 @@
                     </form>
                 </div>
                 
+                <!-- Kayıt Ekranı -->
                 <div class="tab-panel" id="register-panel">
                     <form id="register-form">
                         <div class="input-group">
@@ -89,7 +91,237 @@
         </div>
     </div>
 
-    <script type="module" src="firebase-config.js"></script>
-    <script type="module" src="script.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Firebase Config -->
+    <script>
+        // Firebase yapılandırması
+        const firebaseConfig = {
+            apiKey: "AIzaSyCICiMDhK5MkQDq4dbV_9jkDMt4n3MUpEg",
+            authDomain: "sohbetim-9a9d7.firebaseapp.com",
+            databaseURL: "https://sohbetim-9a9d7-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "sohbetim-9a9d7",
+            storageBucket: "sohbetim-9a9d7.firebasestorage.app",
+            messagingSenderId: "277333150871",
+            appId: "1:277333150871:web:d923f8cddb19ec2f672dd2"
+        };
+
+        // Firebase'i başlat
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+    </script>
+    
+    <!-- Uygulama Scripti -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Sekme geçişleri
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+            
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Aktif butonu güncelle
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Panel göster/gizle
+                    const tabName = btn.getAttribute('data-tab');
+                    tabPanels.forEach(panel => {
+                        panel.classList.remove('active');
+                        if (panel.id === `${tabName}-panel`) {
+                            panel.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // Giriş formu
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const email = loginForm.querySelector('input[type="email"]').value;
+                    const password = loginForm.querySelector('input[type="password"]').value;
+                    
+                    auth.signInWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            const user = userCredential.user;
+                            
+                            // E-posta doğrulama kontrolü
+                            if (!user.emailVerified) {
+                                alert('Lütfen e-posta adresinizi doğrulayın.');
+                                auth.signOut();
+                            } else {
+                                // Gerçek uygulamada yönlendirme olur
+                                alert('Giriş başarılı! Gerçek uygulamada sohbet sayfasına yönlendirileceksiniz.');
+                            }
+                        })
+                        .catch((error) => {
+                            let errorMessage = 'Giriş sırasında bir hata oluştu.';
+                            
+                            if (error.code === 'auth/wrong-password') {
+                                errorMessage = 'Yanlış şifre!';
+                            } else if (error.code === 'auth/user-not-found') {
+                                errorMessage = 'Kullanıcı bulunamadı!';
+                            } else if (error.code === 'auth/invalid-email') {
+                                errorMessage = 'Geçersiz e-posta!';
+                            }
+                            
+                            alert(errorMessage);
+                        });
+                });
+                
+                // Google ile giriş
+                const googleLoginBtn = document.querySelector('.google-btn');
+                if (googleLoginBtn) {
+                    googleLoginBtn.addEventListener('click', () => {
+                        const provider = new firebase.auth.GoogleAuthProvider();
+                        auth.signInWithPopup(provider)
+                            .then((result) => {
+                                const user = result.user;
+                                alert('Google ile giriş başarılı!');
+                            })
+                            .catch((error) => {
+                                alert('Google ile giriş yapılamadı: ' + error.message);
+                            });
+                    });
+                }
+            }
+            
+            // Kayıt formu
+            const registerForm = document.getElementById('register-form');
+            if (registerForm) {
+                registerForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const fullName = registerForm.querySelector('input[type="text"]').value;
+                    const email = registerForm.querySelector('input[type="email"]').value;
+                    const password = registerForm.querySelector('input[type="password"]:first-of-type').value;
+                    const confirmPassword = registerForm.querySelector('input[type="password"]:last-of-type').value;
+                    
+                    // Şifre doğrulama
+                    if (password !== confirmPassword) {
+                        alert('Şifreler eşleşmiyor!');
+                        return;
+                    }
+                    
+                    // Kullanıcı oluştur
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            const user = userCredential.user;
+                            
+                            // Profil güncelleme
+                            user.updateProfile({
+                                displayName: fullName
+                            }).then(() => {
+                                // E-posta doğrulama gönder
+                                user.sendEmailVerification()
+                                    .then(() => {
+                                        alert('Kayıt başarılı! Lütfen e-posta adresinize gönderilen doğrulama linkine tıklayarak hesabınızı aktifleştirin.');
+                                        
+                                        // Kullanıcı verilerini veritabanına kaydet
+                                        const userId = user.uid;
+                                        const username = email.split('@')[0];
+                                        
+                                        db.ref('users/' + userId).set({
+                                            uid: userId,
+                                            email: email,
+                                            displayName: fullName,
+                                            photoURL: `https://api.dicebear.com/7.x/initials/svg?seed=${username}`,
+                                            emailVerified: false,
+                                            createdAt: firebase.database.ServerValue.TIMESTAMP
+                                        });
+                                        
+                                        // Giriş ekranına yönlendir
+                                        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                                        document.querySelector('[data-tab="login"]').classList.add('active');
+                                        document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+                                        document.getElementById('login-panel').classList.add('active');
+                                    });
+                            });
+                        })
+                        .catch((error) => {
+                            let errorMessage = 'Kayıt sırasında bir hata oluştu.';
+                            
+                            if (error.code === 'auth/email-already-in-use') {
+                                errorMessage = 'Bu e-posta adresi zaten kullanımda!';
+                            } else if (error.code === 'auth/invalid-email') {
+                                errorMessage = 'Geçersiz e-posta!';
+                            } else if (error.code === 'auth/weak-password') {
+                                errorMessage = 'Şifre çok zayıf! En az 6 karakter olmalı.';
+                            }
+                            
+                            alert(errorMessage);
+                        });
+                });
+            }
+            
+            // AI Asistan
+            const assistantIcon = document.querySelector('.assistant-icon');
+            const assistantChat = document.querySelector('.assistant-chat');
+            const chatInput = document.querySelector('.chat-input input');
+            const chatSendBtn = document.querySelector('.chat-input button');
+            
+            if (assistantIcon && assistantChat) {
+                assistantIcon.addEventListener('click', () => {
+                    assistantChat.style.display = assistantChat.style.display === 'block' ? 'none' : 'block';
+                });
+                
+                // Enter tuşu ile mesaj gönderme
+                if (chatInput) {
+                    chatInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            handleAIChat();
+                        }
+                    });
+                }
+                
+                // Gönder butonu
+                if (chatSendBtn) {
+                    chatSendBtn.addEventListener('click', handleAIChat);
+                }
+            }
+            
+            // AI Sohbet işleme
+            function handleAIChat() {
+                const message = chatInput.value.trim();
+                if (!message) return;
+                
+                // Kullanıcı mesajını ekle
+                const userMessage = document.createElement('div');
+                userMessage.className = 'chat-bubble';
+                userMessage.style.textAlign = 'right';
+                userMessage.style.borderRadius = '18px 18px 0 18px';
+                userMessage.style.marginLeft = 'auto';
+                userMessage.style.backgroundColor = '#DCF8C6';
+                userMessage.textContent = message;
+                document.querySelector('.chat-bubble').parentNode.insertBefore(userMessage, document.querySelector('.chat-bubble').nextSibling);
+                
+                // Giriş alanını temizle
+                chatInput.value = '';
+                
+                // AI Yanıtı
+                setTimeout(() => {
+                    const aiResponse = document.createElement('div');
+                    aiResponse.className = 'chat-bubble';
+                    aiResponse.textContent = 'Merhaba! Size nasıl yardımcı olabilirim? Bu demo sürümde gerçek AI entegrasyonu yoktur.';
+                    document.querySelector('.chat-bubble').parentNode.insertBefore(aiResponse, document.querySelector('.chat-bubble').nextSibling);
+                }, 1000);
+            }
+            
+            // Auth durumunu izle
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    console.log("Kullanıcı giriş yaptı:", user.email);
+                } else {
+                    console.log("Kullanıcı çıkış yaptı");
+                }
+            });
+        });
+    </script>
 </body>
 </html>
