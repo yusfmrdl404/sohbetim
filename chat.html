@@ -986,4 +986,314 @@
             function loadUserData(user) {
                 // Kullanıcı bilgilerini göster
                 document.getElementById('user-name').textContent = user.displayName || user.email.split('@')[0];
-                document
+                document.getElementById('profile-name').textContent = user.displayName || user.email.split('@')[0];
+                document.getElementById('profile-id').textContent = 'Kullanıcı ID: ' + user.uid;
+                
+                // Profil resmi
+                const avatarElements = document.querySelectorAll('.avatar');
+                avatarElements.forEach(avatar => {
+                    if (user.photoURL) {
+                        avatar.innerHTML = `<img src="${user.photoURL}" alt="Profil">`;
+                    } else {
+                        const initials = user.displayName 
+                            ? user.displayName.split(' ').slice(0, 2).map(n => n[0]).join('') 
+                            : user.email[0].toUpperCase();
+                        avatar.textContent = initials;
+                    }
+                });
+                
+                // Büyük profil resmi
+                const profileAvatar = document.getElementById('profile-avatar');
+                if (user.photoURL) {
+                    profileAvatar.innerHTML = `<img src="${user.photoURL}" alt="Profil">`;
+                } else {
+                    const initials = user.displayName 
+                        ? user.displayName.split(' ').slice(0, 2).map(n => n[0]).join('') 
+                        : user.email[0].toUpperCase();
+                    profileAvatar.textContent = initials;
+                }
+            }
+            
+            // Sohbetleri yükle
+            function loadChats(user) {
+                // Örnek sohbetler ekleyelim
+                const chatsList = document.getElementById('chats-list');
+                chatsList.innerHTML = '';
+                
+                // Örnek sohbet verileri
+                const sampleChats = [
+                    {
+                        id: 'default',
+                        name: 'Örnek Kullanıcı',
+                        lastMessage: 'Merhaba, nasılsın?',
+                        time: '10:24',
+                        photo: null
+                    },
+                    {
+                        id: 'group1',
+                        name: 'Aile Grubu',
+                        lastMessage: 'Ahmet: Bugün piknik yapalım mı?',
+                        time: '09:55',
+                        isGroup: true,
+                        members: 5
+                    }
+                ];
+                
+                sampleChats.forEach(chat => {
+                    const chatItem = document.createElement('div');
+                    chatItem.className = 'chat-item' + (chat.id === 'default' ? ' active' : '');
+                    chatItem.setAttribute('data-chat', chat.id);
+                    
+                    chatItem.innerHTML = `
+                        <div class="avatar" style="${chat.isGroup ? 'background: #10b981;' : ''}">
+                            ${chat.isGroup ? 
+                                '<i class="fas fa-users"></i>' : 
+                                (chat.photo ? 
+                                    `<img src="${chat.photo}" alt="${chat.name}">` : 
+                                    '<i class="fas fa-user"></i>')
+                            }
+                        </div>
+                        <div class="chat-info">
+                            <h3>${chat.name}</h3>
+                            ${chat.isGroup ? 
+                                `<div class="group-members">
+                                    <span>Sen, Ahmet, Ayşe,</span>
+                                    <span>+2 daha</span>
+                                </div>` :
+                                `<p>${chat.lastMessage}</p>`
+                            }
+                        </div>
+                        <div class="chat-time">${chat.time}</div>
+                    `;
+                    
+                    chatItem.addEventListener('click', () => {
+                        // Aktif sohbeti güncelle
+                        document.querySelectorAll('.chat-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        chatItem.classList.add('active');
+                        
+                        // Sohbet başlığını güncelle
+                        document.getElementById('chat-name').textContent = chat.name;
+                        document.getElementById('chat-status').textContent = chat.isGroup ? 
+                            `${chat.members} üye` : 'Çevrimiçi';
+                        
+                        // Sohbet içeriğini güncelle
+                        const messages = document.getElementById('messages');
+                        if (chat.id === 'default') {
+                            messages.innerHTML = `
+                                <div class="message received">
+                                    Merhaba! Bugün nasılsın?
+                                    <div class="message-time">10:24</div>
+                                </div>
+                                <div class="message sent">
+                                    İyiyim teşekkürler, sen nasılsın?
+                                    <div class="message-time">10:25</div>
+                                </div>
+                                <div class="message received">
+                                    Ben de iyiyim, teşekkürler!
+                                    <div class="message-time">10:26</div>
+                                </div>
+                            `;
+                        } else {
+                            messages.innerHTML = `
+                                <div class="message received">
+                                    <strong>Ahmet:</strong> Bugün piknik yapalım mı?
+                                    <div class="message-time">09:50</div>
+                                </div>
+                                <div class="message received">
+                                    <strong>Ayşe:</strong> Evet, harika fikir!
+                                    <div class="message-time">09:52</div>
+                                </div>
+                                <div class="message sent">
+                                    Tabii ki, harika olur!
+                                    <div class="message-time">09:55</div>
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    chatsList.appendChild(chatItem);
+                });
+            }
+            
+            // Aktif kullanıcıları izle
+            function setupActiveUsers() {
+                // Örnek aktif kullanıcılar
+                const activeUsersList = document.getElementById('active-users-list');
+                activeUsersList.innerHTML = '';
+                
+                const sampleActiveUsers = [
+                    { id: 'user1', name: 'Ali', photo: null },
+                    { id: 'user2', name: 'Ayşe', photo: null },
+                    { id: 'user3', name: 'Mehmet', photo: null },
+                    { id: 'user4', name: 'Zeynep', photo: null }
+                ];
+                
+                sampleActiveUsers.forEach(user => {
+                    const activeUser = document.createElement('div');
+                    activeUser.className = 'active-user';
+                    
+                    activeUser.innerHTML = `
+                        <div class="avatar">
+                            <i class="fas fa-user"></i>
+                            <span class="online-status"></span>
+                        </div>
+                        <p>${user.name}</p>
+                    `;
+                    
+                    activeUsersList.appendChild(activeUser);
+                });
+            }
+            
+            // Mesaj gönderme
+            function setupMessageSending(user) {
+                const messageInput = document.getElementById('message-input');
+                const sendButton = document.getElementById('send-message');
+                
+                // Enter ile mesaj gönderme
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && messageInput.value.trim() !== '') {
+                        sendMessage(user, messageInput.value);
+                        messageInput.value = '';
+                    }
+                });
+                
+                // Gönder butonu
+                sendButton.addEventListener('click', () => {
+                    if (messageInput.value.trim() !== '') {
+                        sendMessage(user, messageInput.value);
+                        messageInput.value = '';
+                    }
+                });
+            }
+            
+            // Mesaj gönder
+            function sendMessage(user, message) {
+                const messages = document.getElementById('messages');
+                
+                // Yeni mesajı ekle
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message sent';
+                messageElement.innerHTML = `
+                    ${message}
+                    <div class="message-time">${getCurrentTime()}</div>
+                `;
+                
+                messages.appendChild(messageElement);
+                
+                // En aşağı kaydır
+                messages.scrollTop = messages.scrollHeight;
+            }
+            
+            // Saat fonksiyonu
+            function getCurrentTime() {
+                const now = new Date();
+                return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            }
+            
+            // Profil menüsü
+            function setupProfileMenu() {
+                const settingsBtn = document.getElementById('settings-btn');
+                const userProfile = document.getElementById('user-profile');
+                const closeProfile = document.querySelector('.close-profile');
+                
+                settingsBtn.addEventListener('click', () => {
+                    userProfile.classList.add('active');
+                });
+                
+                closeProfile.addEventListener('click', () => {
+                    userProfile.classList.remove('active');
+                });
+                
+                // Profil dışına tıklandığında kapat
+                document.addEventListener('click', (e) => {
+                    if (userProfile.classList.contains('active') && 
+                        !userProfile.contains(e.target) && 
+                        !e.target.closest('#settings-btn')) {
+                        userProfile.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Grup oluşturma
+            function setupGroupCreation(user) {
+                const newGroupBtn = document.getElementById('new-group-btn');
+                const newGroupModal = document.getElementById('new-group-modal');
+                const closeModal = document.querySelector('.close-modal');
+                const createGroupBtn = document.getElementById('create-group-btn');
+                const groupPhotoPreview = document.getElementById('group-photo-preview');
+                const groupPhotoInput = document.getElementById('group-photo');
+                
+                // Yeni grup butonu
+                newGroupBtn.addEventListener('click', () => {
+                    newGroupModal.classList.add('active');
+                });
+                
+                // Kapat butonu
+                closeModal.addEventListener('click', () => {
+                    newGroupModal.classList.remove('active');
+                });
+                
+                // Modal dışına tıklandığında kapat
+                newGroupModal.addEventListener('click', (e) => {
+                    if (e.target === newGroupModal) {
+                        newGroupModal.classList.remove('active');
+                    }
+                });
+                
+                // Fotoğraf seçimi
+                groupPhotoPreview.addEventListener('click', () => {
+                    groupPhotoInput.click();
+                });
+                
+                groupPhotoInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(ev) {
+                            groupPhotoPreview.innerHTML = `<img src="${ev.target.result}" alt="Grup Fotoğrafı">`;
+                        }
+                        
+                        reader.readAsDataURL(e.target.files[0]);
+                    }
+                });
+                
+                // Grup oluşturma
+                createGroupBtn.addEventListener('click', () => {
+                    const groupName = document.getElementById('group-name').value;
+                    const selectedUsers = document.querySelectorAll('.user-item.selected');
+                    
+                    if (!groupName) {
+                        alert('Lütfen grup adı girin!');
+                        return;
+                    }
+                    
+                    if (selectedUsers.length === 0) {
+                        alert('Lütfen en az bir kullanıcı seçin!');
+                        return;
+                    }
+                    
+                    alert(`"${groupName}" adlı grup oluşturuldu!`);
+                    newGroupModal.classList.remove('active');
+                    
+                    // Formu sıfırla
+                    document.getElementById('group-name').value = '';
+                    document.getElementById('group-photo').value = '';
+                    groupPhotoPreview.innerHTML = '<i class="fas fa-camera"></i>';
+                    document.querySelectorAll('.user-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                });
+                
+                // Kullanıcı seçimi
+                document.querySelectorAll('.user-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        item.classList.toggle('selected');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
