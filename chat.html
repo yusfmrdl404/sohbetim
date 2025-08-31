@@ -49,12 +49,28 @@
             font-weight: bold;
             font-size: 1.2rem;
             overflow: hidden;
+            position: relative;
         }
         
         .avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+        
+        .online-status {
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid white;
+        }
+        
+        .profile-info {
+            flex: 1;
         }
         
         .profile-info h3 {
@@ -136,6 +152,7 @@
             cursor: pointer;
             transition: background 0.2s;
             border-left: 3px solid transparent;
+            position: relative;
         }
         
         .chat-item:hover {
@@ -171,15 +188,18 @@
             color: #64748b;
         }
         
-        .online-status {
-            width: 12px;
-            height: 12px;
-            background: #10b981;
-            border-radius: 50%;
+        .unread-badge {
             position: absolute;
-            bottom: 0;
-            right: 0;
-            border: 2px solid white;
+            right: 20px;
+            background: #6366f1;
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
         }
         
         .main-content {
@@ -412,12 +432,21 @@
             font-size: 3rem;
             margin: 0 auto 20px;
             overflow: hidden;
+            position: relative;
         }
         
         .big-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+        
+        .big-avatar .online-status {
+            width: 15px;
+            height: 15px;
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
         }
         
         .profile-body h2 {
@@ -515,6 +544,7 @@
             flex-direction: column;
             align-items: center;
             min-width: 60px;
+            cursor: pointer;
         }
         
         .active-user .avatar {
@@ -694,6 +724,25 @@
             flex: 1;
             margin: 0;
         }
+        
+        .user-item .status {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        
+        .user-item .online {
+            color: #10b981;
+        }
+        
+        .search-results {
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .search-results.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -703,6 +752,7 @@
                 <div class="profile">
                     <div class="avatar" id="user-avatar">
                         <i class="fas fa-user"></i>
+                        <span class="online-status"></span>
                     </div>
                     <div class="profile-info">
                         <h3 id="user-name">Yükleniyor...</h3>
@@ -714,7 +764,10 @@
                 </div>
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Kişi veya sohbet ara...">
+                    <input type="text" id="user-search" placeholder="Kullanıcı ara...">
+                </div>
+                <div class="search-results" id="search-results">
+                    <!-- Arama sonuçları buraya yüklenecek -->
                 </div>
                 <div class="actions">
                     <button id="new-chat-btn">
@@ -728,63 +781,12 @@
             
             <div class="chats" id="chats-list">
                 <!-- Sohbetler buraya dinamik olarak eklenecek -->
-                <div class="chat-item active" data-chat="default">
-                    <div class="avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="chat-info">
-                        <h3>Örnek Kullanıcı</h3>
-                        <p>Merhaba, nasılsın?</p>
-                    </div>
-                    <div class="chat-time">10:24</div>
-                </div>
-                <div class="chat-item" data-chat="group1">
-                    <div class="avatar" style="background: #10b981;">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="chat-info">
-                        <h3>Aile Grubu</h3>
-                        <div class="group-members">
-                            <span>Sen, Ahmet, Ayşe,</span>
-                            <span>+2 daha</span>
-                        </div>
-                    </div>
-                    <div class="chat-time">09:55</div>
-                </div>
             </div>
             
             <div class="active-users">
                 <h4><i class="fas fa-circle" style="color: #10b981;"></i> Aktif Kullanıcılar</h4>
                 <div class="active-list" id="active-users-list">
                     <!-- Aktif kullanıcılar buraya dinamik olarak eklenecek -->
-                    <div class="active-user">
-                        <div class="avatar">
-                            <i class="fas fa-user"></i>
-                            <span class="online-status"></span>
-                        </div>
-                        <p>Ali</p>
-                    </div>
-                    <div class="active-user">
-                        <div class="avatar">
-                            <i class="fas fa-user"></i>
-                            <span class="online-status"></span>
-                        </div>
-                        <p>Ayşe</p>
-                    </div>
-                    <div class="active-user">
-                        <div class="avatar">
-                            <i class="fas fa-user"></i>
-                            <span class="online-status"></span>
-                        </div>
-                        <p>Mehmet</p>
-                    </div>
-                    <div class="active-user">
-                        <div class="avatar">
-                            <i class="fas fa-user"></i>
-                            <span class="online-status"></span>
-                        </div>
-                        <p>Zeynep</p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -794,10 +796,11 @@
                 <div class="chat-info">
                     <div class="avatar" id="chat-avatar">
                         <i class="fas fa-user"></i>
+                        <span class="online-status"></span>
                     </div>
                     <div>
-                        <h2 id="chat-name">Örnek Kullanıcı</h2>
-                        <p id="chat-status">Çevrimiçi</p>
+                        <h2 id="chat-name">Sohbet Seçin</h2>
+                        <p id="chat-status">Aktif kullanıcılar için bir sohbet seçin</p>
                     </div>
                 </div>
                 <div class="chat-actions">
@@ -808,17 +811,10 @@
             </div>
             
             <div class="messages" id="messages">
-                <div class="message received">
-                    Merhaba! Bugün nasılsın?
-                    <div class="message-time">10:24</div>
-                </div>
-                <div class="message sent">
-                    İyiyim teşekkürler, sen nasılsın?
-                    <div class="message-time">10:25</div>
-                </div>
-                <div class="message received">
-                    Ben de iyiyim, teşekkürler!
-                    <div class="message-time">10:26</div>
+                <div class="welcome-message">
+                    <i class="fas fa-comments"></i>
+                    <h3>Sohbetim'e Hoş Geldiniz</h3>
+                    <p>Soldan bir kişi veya grup seçin, veya yeni bir sohbet başlatın</p>
                 </div>
             </div>
             
@@ -837,20 +833,22 @@
             <div class="profile-body">
                 <div class="big-avatar" id="profile-avatar">
                     <i class="fas fa-user"></i>
+                    <span class="online-status"></span>
                 </div>
-                <h2 id="profile-name">Ad Soyad</h2>
+                <h2 id="profile-name">Kullanıcı Adı</h2>
                 <p class="user-id" id="profile-id">Kullanıcı ID: Yükleniyor...</p>
+                <p id="profile-username" style="font-weight: bold; margin-top: -15px;">@kullaniciadi</p>
                 <div class="profile-stats">
                     <div class="stat">
-                        <span class="value" id="total-chats">5</span>
+                        <span class="value" id="total-chats">0</span>
                         <span class="label">Sohbet</span>
                     </div>
                     <div class="stat">
-                        <span class="value" id="total-groups">2</span>
+                        <span class="value" id="total-groups">0</span>
                         <span class="label">Grup</span>
                     </div>
                     <div class="stat">
-                        <span class="value" id="message-count">142</span>
+                        <span class="value" id="message-count">0</span>
                         <span class="label">Mesaj</span>
                     </div>
                 </div>
@@ -884,28 +882,10 @@
                     <label>Katılacak Kişiler</label>
                     <div class="search-users">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="search-users" placeholder="Kişi ara...">
+                        <input type="text" id="group-search-users" placeholder="Kişi ara...">
                     </div>
                     <div class="user-list" id="user-list">
                         <!-- Kullanıcılar buraya yüklenecek -->
-                        <div class="user-item" data-user="user1">
-                            <div class="avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <p>Ali Yılmaz</p>
-                        </div>
-                        <div class="user-item" data-user="user2">
-                            <div class="avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <p>Ayşe Kaya</p>
-                        </div>
-                        <div class="user-item" data-user="user3">
-                            <div class="avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <p>Mehmet Demir</p>
-                        </div>
                     </div>
                 </div>
                 <button class="primary-btn" id="create-group-btn">Grubu Oluştur</button>
@@ -939,6 +919,9 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            let currentUser = null;
+            let currentChatId = null;
+            
             // Kullanıcı oturum kontrolü
             auth.onAuthStateChanged((user) => {
                 if (!user || !user.emailVerified) {
@@ -946,6 +929,8 @@
                     window.location.href = 'index.html';
                     return;
                 }
+                
+                currentUser = user;
                 
                 // Kullanıcı bilgilerini yükle
                 loadUserData(user);
@@ -955,6 +940,9 @@
                 
                 // Aktif kullanıcıları izle
                 setupActiveUsers();
+                
+                // Kullanıcı arama
+                setupUserSearch();
                 
                 // Mesaj gönderme
                 setupMessageSending(user);
@@ -984,165 +972,497 @@
             
             // Kullanıcı bilgilerini yükle
             function loadUserData(user) {
-                // Kullanıcı bilgilerini göster
-                document.getElementById('user-name').textContent = user.displayName || user.email.split('@')[0];
-                document.getElementById('profile-name').textContent = user.displayName || user.email.split('@')[0];
-                document.getElementById('profile-id').textContent = 'Kullanıcı ID: ' + user.uid;
-                
-                // Profil resmi
-                const avatarElements = document.querySelectorAll('.avatar');
-                avatarElements.forEach(avatar => {
-                    if (user.photoURL) {
-                        avatar.innerHTML = `<img src="${user.photoURL}" alt="Profil">`;
-                    } else {
-                        const initials = user.displayName 
-                            ? user.displayName.split(' ').slice(0, 2).map(n => n[0]).join('') 
-                            : user.email[0].toUpperCase();
-                        avatar.textContent = initials;
+                // Kullanıcı bilgilerini veritabanından al
+                db.ref('users/' + user.uid).once('value', (snapshot) => {
+                    const userData = snapshot.val();
+                    if (userData) {
+                        // Kullanıcı bilgilerini göster
+                        document.getElementById('user-name').textContent = userData.username;
+                        document.getElementById('profile-name').textContent = userData.username;
+                        document.getElementById('profile-username').textContent = '@' + userData.username;
+                        document.getElementById('profile-id').textContent = 'Kullanıcı ID: ' + user.uid;
+                        
+                        // Profil resmi
+                        const avatarElements = document.querySelectorAll('.avatar');
+                        avatarElements.forEach(avatar => {
+                            if (userData.photoURL) {
+                                avatar.innerHTML = `<img src="${userData.photoURL}" alt="Profil">`;
+                                if (!avatar.querySelector('.online-status')) {
+                                    avatar.innerHTML += '<span class="online-status"></span>';
+                                }
+                            } else {
+                                const initials = userData.username ? 
+                                    userData.username.substring(0, 2).toUpperCase() : 
+                                    user.email[0].toUpperCase();
+                                avatar.textContent = initials;
+                                if (!avatar.querySelector('.online-status')) {
+                                    avatar.innerHTML += '<span class="online-status"></span>';
+                                }
+                            }
+                        });
+                        
+                        // Büyük profil resmi
+                        const profileAvatar = document.getElementById('profile-avatar');
+                        if (userData.photoURL) {
+                            profileAvatar.innerHTML = `<img src="${userData.photoURL}" alt="Profil">`;
+                            profileAvatar.innerHTML += '<span class="online-status"></span>';
+                        } else {
+                            const initials = userData.username ? 
+                                userData.username.substring(0, 2).toUpperCase() : 
+                                user.email[0].toUpperCase();
+                            profileAvatar.textContent = initials;
+                            profileAvatar.innerHTML += '<span class="online-status"></span>';
+                        }
                     }
                 });
-                
-                // Büyük profil resmi
-                const profileAvatar = document.getElementById('profile-avatar');
-                if (user.photoURL) {
-                    profileAvatar.innerHTML = `<img src="${user.photoURL}" alt="Profil">`;
-                } else {
-                    const initials = user.displayName 
-                        ? user.displayName.split(' ').slice(0, 2).map(n => n[0]).join('') 
-                        : user.email[0].toUpperCase();
-                    profileAvatar.textContent = initials;
-                }
             }
             
             // Sohbetleri yükle
             function loadChats(user) {
-                // Örnek sohbetler ekleyelim
                 const chatsList = document.getElementById('chats-list');
-                chatsList.innerHTML = '';
+                chatsList.innerHTML = '<div class="loading">Sohbetler yükleniyor...</div>';
                 
-                // Örnek sohbet verileri
-                const sampleChats = [
-                    {
-                        id: 'default',
-                        name: 'Örnek Kullanıcı',
-                        lastMessage: 'Merhaba, nasılsın?',
-                        time: '10:24',
-                        photo: null
-                    },
-                    {
-                        id: 'group1',
-                        name: 'Aile Grubu',
-                        lastMessage: 'Ahmet: Bugün piknik yapalım mı?',
-                        time: '09:55',
-                        isGroup: true,
-                        members: 5
-                    }
-                ];
-                
-                sampleChats.forEach(chat => {
-                    const chatItem = document.createElement('div');
-                    chatItem.className = 'chat-item' + (chat.id === 'default' ? ' active' : '');
-                    chatItem.setAttribute('data-chat', chat.id);
-                    
-                    chatItem.innerHTML = `
-                        <div class="avatar" style="${chat.isGroup ? 'background: #10b981;' : ''}">
-                            ${chat.isGroup ? 
-                                '<i class="fas fa-users"></i>' : 
-                                (chat.photo ? 
-                                    `<img src="${chat.photo}" alt="${chat.name}">` : 
-                                    '<i class="fas fa-user"></i>')
-                            }
-                        </div>
-                        <div class="chat-info">
-                            <h3>${chat.name}</h3>
-                            ${chat.isGroup ? 
-                                `<div class="group-members">
-                                    <span>Sen, Ahmet, Ayşe,</span>
-                                    <span>+2 daha</span>
-                                </div>` :
-                                `<p>${chat.lastMessage}</p>`
-                            }
-                        </div>
-                        <div class="chat-time">${chat.time}</div>
-                    `;
-                    
-                    chatItem.addEventListener('click', () => {
-                        // Aktif sohbeti güncelle
-                        document.querySelectorAll('.chat-item').forEach(item => {
-                            item.classList.remove('active');
-                        });
-                        chatItem.classList.add('active');
+                // Kullanıcının sohbetlerini izle
+                const userChatsRef = db.ref('userChats/' + user.uid);
+                userChatsRef.once('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        const chats = snapshot.val();
+                        const chatPromises = [];
                         
-                        // Sohbet başlığını güncelle
-                        document.getElementById('chat-name').textContent = chat.name;
-                        document.getElementById('chat-status').textContent = chat.isGroup ? 
-                            `${chat.members} üye` : 'Çevrimiçi';
-                        
-                        // Sohbet içeriğini güncelle
-                        const messages = document.getElementById('messages');
-                        if (chat.id === 'default') {
-                            messages.innerHTML = `
-                                <div class="message received">
-                                    Merhaba! Bugün nasılsın?
-                                    <div class="message-time">10:24</div>
-                                </div>
-                                <div class="message sent">
-                                    İyiyim teşekkürler, sen nasılsın?
-                                    <div class="message-time">10:25</div>
-                                </div>
-                                <div class="message received">
-                                    Ben de iyiyim, teşekkürler!
-                                    <div class="message-time">10:26</div>
-                                </div>
-                            `;
-                        } else {
-                            messages.innerHTML = `
-                                <div class="message received">
-                                    <strong>Ahmet:</strong> Bugün piknik yapalım mı?
-                                    <div class="message-time">09:50</div>
-                                </div>
-                                <div class="message received">
-                                    <strong>Ayşe:</strong> Evet, harika fikir!
-                                    <div class="message-time">09:52</div>
-                                </div>
-                                <div class="message sent">
-                                    Tabii ki, harika olur!
-                                    <div class="message-time">09:55</div>
-                                </div>
-                            `;
+                        // Her sohbet için verileri al
+                        for (const chatId in chats) {
+                            chatPromises.push(
+                                db.ref('chats/' + chatId).once('value')
+                                    .then(chatSnapshot => {
+                                        if (chatSnapshot.exists()) {
+                                            return {
+                                                id: chatId,
+                                                data: chatSnapshot.val()
+                                            };
+                                        }
+                                        return null;
+                                    })
+                            );
                         }
-                    });
-                    
-                    chatsList.appendChild(chatItem);
+                        
+                        Promise.all(chatPromises)
+                            .then(chatResults => {
+                                chatsList.innerHTML = '';
+                                
+                                // Geçerli sohbetleri filtrele ve göster
+                                chatResults
+                                    .filter(chat => chat !== null)
+                                    .sort((a, b) => 
+                                        (b.data.lastMessage?.timestamp || 0) - 
+                                        (a.data.lastMessage?.timestamp || 0)
+                                    )
+                                    .forEach(chat => {
+                                        const chatData = chat.data;
+                                        const isGroup = chatData.isGroup || false;
+                                        
+                                        // Sohbet partnerini bul
+                                        let partnerName = '';
+                                        let partnerPhoto = '';
+                                        let partnerStatus = '';
+                                        
+                                        if (!isGroup) {
+                                            const partnerId = Object.keys(chatData.users).find(id => id !== currentUser.uid);
+                                            if (partnerId) {
+                                                db.ref('users/' + partnerId).once('value', (partnerSnapshot) => {
+                                                    if (partnerSnapshot.exists()) {
+                                                        const partnerData = partnerSnapshot.val();
+                                                        partnerName = partnerData.username || 'Bilinmeyen';
+                                                        partnerPhoto = partnerData.photoURL || '';
+                                                        partnerStatus = partnerData.status || 'offline';
+                                                        
+                                                        // Sohbet öğesini güncelle
+                                                        const chatItem = document.querySelector(`.chat-item[data-chat="${chat.id}"]`);
+                                                        if (chatItem) {
+                                                            const avatar = chatItem.querySelector('.avatar');
+                                                            if (partnerPhoto) {
+                                                                avatar.innerHTML = `<img src="${partnerPhoto}" alt="${partnerName}">`;
+                                                                if (!avatar.querySelector('.online-status')) {
+                                                                    avatar.innerHTML += '<span class="online-status"></span>';
+                                                                }
+                                                            } else {
+                                                                const initials = partnerName.substring(0, 2).toUpperCase();
+                                                                avatar.textContent = initials;
+                                                                avatar.innerHTML += '<span class="online-status"></span>';
+                                                            }
+                                                            
+                                                            if (partnerStatus === 'online') {
+                                                                chatItem.querySelector('.online-status').style.background = '#10b981';
+                                                            } else {
+                                                                chatItem.querySelector('.online-status').style.background = '#94a3b8';
+                                                            }
+                                                        }
+                                                    }
+                                                });
+                                            }
+                                        } else {
+                                            partnerName = chatData.groupName || 'Grup';
+                                            partnerPhoto = chatData.groupPhoto || '';
+                                        }
+                                        
+                                        // Sohbet öğesi oluştur
+                                        const chatItem = document.createElement('div');
+                                        chatItem.className = 'chat-item';
+                                        chatItem.setAttribute('data-chat', chat.id);
+                                        
+                                        // Son mesajı formatla
+                                        let lastMessage = '';
+                                        if (chatData.lastMessage) {
+                                            if (!isGroup && chatData.lastMessage.sender !== currentUser.uid) {
+                                                lastMessage = chatData.lastMessage.text;
+                                            } else if (isGroup) {
+                                                // Grup sohbetlerinde göndereni göster
+                                                const senderId = chatData.lastMessage.sender;
+                                                let senderName = 'Bilinmeyen';
+                                                
+                                                if (senderId === currentUser.uid) {
+                                                    senderName = 'Sen';
+                                                } else {
+                                                    db.ref('users/' + senderId).once('value', (senderSnapshot) => {
+                                                        if (senderSnapshot.exists()) {
+                                                            senderName = senderSnapshot.val().username || 'Bilinmeyen';
+                                                        }
+                                                        const chatItem = document.querySelector(`.chat-item[data-chat="${chat.id}"] .chat-info p`);
+                                                        if (chatItem) {
+                                                            chatItem.textContent = `${senderName}: ${chatData.lastMessage.text}`;
+                                                        }
+                                                    });
+                                                }
+                                                
+                                                lastMessage = `${senderName}: ${chatData.lastMessage.text}`;
+                                            } else {
+                                                lastMessage = chatData.lastMessage.text;
+                                            }
+                                        }
+                                        
+                                        // Zamanı formatla
+                                        const lastTime = chatData.lastMessage?.timestamp ? 
+                                            formatTime(chatData.lastMessage.timestamp) : 'Yeni';
+                                        
+                                        chatItem.innerHTML = `
+                                            <div class="avatar" style="${isGroup ? 'background: #10b981;' : ''}">
+                                                ${isGroup ? 
+                                                    (chatData.groupPhoto ? 
+                                                        `<img src="${chatData.groupPhoto}" alt="${partnerName}">` : 
+                                                        '<i class="fas fa-users"></i>') : 
+                                                    (partnerPhoto ? 
+                                                        `<img src="${partnerPhoto}" alt="${partnerName}">` : 
+                                                        '<i class="fas fa-user"></i>')
+                                                }
+                                                ${!isGroup ? '<span class="online-status"></span>' : ''}
+                                            </div>
+                                            <div class="chat-info">
+                                                <h3>${partnerName}</h3>
+                                                <p>${lastMessage}</p>
+                                            </div>
+                                            <div class="chat-time">${lastTime}</div>
+                                        `;
+                                        
+                                        // Sohbeti tıklandığında yükle
+                                        chatItem.addEventListener('click', () => {
+                                            currentChatId = chat.id;
+                                            loadChatMessages(chat.id, isGroup);
+                                            
+                                            // Aktif sohbeti güncelle
+                                            document.querySelectorAll('.chat-item').forEach(item => {
+                                                item.classList.remove('active');
+                                            });
+                                            chatItem.classList.add('active');
+                                            
+                                            // Sohbet başlığını güncelle
+                                            document.getElementById('chat-name').textContent = partnerName;
+                                            
+                                            if (isGroup) {
+                                                document.getElementById('chat-status').textContent = 
+                                                    `${Object.keys(chatData.users).length} üye`;
+                                            } else {
+                                                document.getElementById('chat-status').textContent = 
+                                                    partnerStatus === 'online' ? 'Çevrimiçi' : 'Çevrimdışı';
+                                            }
+                                        });
+                                        
+                                        chatsList.appendChild(chatItem);
+                                    });
+                            });
+                    } else {
+                        chatsList.innerHTML = `
+                            <div class="welcome-chat">
+                                <i class="fas fa-comments"></i>
+                                <h3>Henüz sohbetiniz yok</h3>
+                                <p>Soldan "Yeni Sohbet" butonuna tıklayarak bir sohbet başlatabilirsiniz</p>
+                            </div>
+                        `;
+                    }
                 });
+            }
+            
+            // Sohbet mesajlarını yükle
+            function loadChatMessages(chatId, isGroup) {
+                const messages = document.getElementById('messages');
+                messages.innerHTML = '<div class="loading">Mesajlar yükleniyor...</div>';
+                
+                // Mesajları izle
+                const messagesRef = db.ref('messages/' + chatId);
+                messagesRef.orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
+                    messages.innerHTML = '';
+                    
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        for (const messageId in data) {
+                            const message = data[messageId];
+                            
+                            // Mesaj öğesi oluştur
+                            const messageElement = document.createElement('div');
+                            messageElement.className = `message ${message.sender === currentUser.uid ? 'sent' : 'received'}`;
+                            
+                            messageElement.innerHTML = `
+                                ${message.text}
+                                <div class="message-time">${formatTime(message.timestamp)}</div>
+                            `;
+                            
+                            messages.appendChild(messageElement);
+                        }
+                        
+                        // En aşağı kaydır
+                        messages.scrollTop = messages.scrollHeight;
+                    } else {
+                        messages.innerHTML = `
+                            <div class="welcome-chat">
+                                <i class="fas fa-comments"></i>
+                                <h3>Bu sohbette henüz mesaj yok</h3>
+                                <p>Bu sohbete ilk mesajı siz yazın</p>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            // Saat formatlama
+            function formatTime(timestamp) {
+                if (!timestamp) return '';
+                
+                const date = new Date(timestamp);
+                const now = new Date();
+                
+                // Bugün mi?
+                if (date.getDate() === now.getDate() && 
+                    date.getMonth() === now.getMonth() && 
+                    date.getFullYear() === now.getFullYear()) {
+                    return `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                }
+                
+                // Dün mü?
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                if (date.getDate() === yesterday.getDate() && 
+                    date.getMonth() === yesterday.getMonth() && 
+                    date.getFullYear() === yesterday.getFullYear()) {
+                    return 'Dün';
+                }
+                
+                // Diğer durumlar
+                return `${date.getDate()}/${date.getMonth()+1}`;
             }
             
             // Aktif kullanıcıları izle
             function setupActiveUsers() {
-                // Örnek aktif kullanıcılar
                 const activeUsersList = document.getElementById('active-users-list');
-                activeUsersList.innerHTML = '';
+                activeUsersList.innerHTML = '<div class="loading">Yükleniyor...</div>';
                 
-                const sampleActiveUsers = [
-                    { id: 'user1', name: 'Ali', photo: null },
-                    { id: 'user2', name: 'Ayşe', photo: null },
-                    { id: 'user3', name: 'Mehmet', photo: null },
-                    { id: 'user4', name: 'Zeynep', photo: null }
-                ];
+                // Aktif kullanıcıları izle
+                const onlineUsersRef = db.ref('onlineUsers');
+                onlineUsersRef.on('value', (snapshot) => {
+                    activeUsersList.innerHTML = '';
+                    
+                    if (snapshot.exists()) {
+                        const users = snapshot.val();
+                        let count = 0;
+                        
+                        for (const userId in users) {
+                            if (userId === currentUser.uid) continue; // Kendimizi gösterme
+                            
+                            // Kullanıcı bilgilerini al
+                            db.ref('users/' + userId).once('value', (userSnapshot) => {
+                                if (userSnapshot.exists() && count < 10) { // Sadece ilk 10 aktif kullanıcı
+                                    count++;
+                                    const userData = userSnapshot.val();
+                                    
+                                    const activeUser = document.createElement('div');
+                                    activeUser.className = 'active-user';
+                                    activeUser.setAttribute('data-user', userId);
+                                    
+                                    activeUser.innerHTML = `
+                                        <div class="avatar">
+                                            ${userData.photoURL ? 
+                                                `<img src="${userData.photoURL}" alt="${userData.username}">` : 
+                                                `<span>${userData.username ? userData.username.substring(0, 2).toUpperCase() : '??'}</span>`
+                                            }
+                                            <span class="online-status"></span>
+                                        </div>
+                                        <p>${userData.username}</p>
+                                    `;
+                                    
+                                    // Kullanıcıya tıklandığında sohbet başlat
+                                    activeUser.addEventListener('click', () => {
+                                        startChatWithUser(userId);
+                                    });
+                                    
+                                    activeUsersList.appendChild(activeUser);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+            
+            // Yeni sohbet başlat
+            function startChatWithUser(partnerId) {
+                if (!currentUser) return;
                 
-                sampleActiveUsers.forEach(user => {
-                    const activeUser = document.createElement('div');
-                    activeUser.className = 'active-user';
+                // Kullanıcı adını al
+                db.ref('users/' + partnerId).once('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        const partnerData = snapshot.val();
+                        
+                        // Sohbeti kontrol et veya oluştur
+                        const chatId = [currentUser.uid, partnerId].sort().join('_');
+                        
+                        // Sohbet zaten var mı?
+                        db.ref('chats/' + chatId).once('value', (chatSnapshot) => {
+                            if (!chatSnapshot.exists()) {
+                                // Yeni sohbet oluştur
+                                const newChat = {
+                                    users: {
+                                        [currentUser.uid]: true,
+                                        [partnerId]: true
+                                    },
+                                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                                };
+                                
+                                // Sohbeti kaydet
+                                db.ref('chats/' + chatId).set(newChat)
+                                    .then(() => {
+                                        // Kullanıcıların sohbet listesine ekle
+                                        db.ref('userChats/' + currentUser.uid + '/' + chatId).set(true);
+                                        db.ref('userChats/' + partnerId + '/' + chatId).set(true);
+                                        
+                                        // Sohbeti yükle
+                                        loadChats(currentUser);
+                                        
+                                        // Aktif sohbeti güncelle
+                                        setTimeout(() => {
+                                            const chatItem = document.querySelector(`.chat-item[data-chat="${chatId}"]`);
+                                            if (chatItem) {
+                                                chatItem.click();
+                                            }
+                                        }, 300);
+                                    });
+                            } else {
+                                // Sohbeti yükle
+                                loadChats(currentUser);
+                                
+                                // Aktif sohbeti güncelle
+                                setTimeout(() => {
+                                    const chatItem = document.querySelector(`.chat-item[data-chat="${chatId}"]`);
+                                    if (chatItem) {
+                                        chatItem.click();
+                                    }
+                                }, 300);
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Kullanıcı arama
+            function setupUserSearch() {
+                const searchInput = document.getElementById('user-search');
+                const searchResults = document.getElementById('search-results');
+                
+                searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.trim().toLowerCase();
                     
-                    activeUser.innerHTML = `
-                        <div class="avatar">
-                            <i class="fas fa-user"></i>
-                            <span class="online-status"></span>
-                        </div>
-                        <p>${user.name}</p>
-                    `;
+                    if (searchTerm.length < 2) {
+                        searchResults.classList.remove('active');
+                        return;
+                    }
                     
-                    activeUsersList.appendChild(activeUser);
+                    searchResults.innerHTML = '<div class="loading">Aranıyor...</div>';
+                    searchResults.classList.add('active');
+                    
+                    // Kullanıcı adlarına göre arama yap
+                    db.ref('usernames').orderByKey().startAt(searchTerm).endAt(searchTerm + '\uf8ff').once('value', (snapshot) => {
+                        searchResults.innerHTML = '';
+                        
+                        if (snapshot.exists()) {
+                            const usernames = snapshot.val();
+                            let foundCount = 0;
+                            
+                            for (const username in usernames) {
+                                if (username.toLowerCase().includes(searchTerm) && foundCount < 5) {
+                                    foundCount++;
+                                    const userId = usernames[username];
+                                    
+                                    // Kullanıcı bilgilerini al
+                                    db.ref('users/' + userId).once('value', (userSnapshot) => {
+                                        if (userSnapshot.exists()) {
+                                            const userData = userSnapshot.val();
+                                            
+                                            const userItem = document.createElement('div');
+                                            userItem.className = 'user-item';
+                                            userItem.setAttribute('data-user', userId);
+                                            
+                                            userItem.innerHTML = `
+                                                <div class="avatar">
+                                                    ${userData.photoURL ? 
+                                                        `<img src="${userData.photoURL}" alt="${username}">` : 
+                                                        `<span>${username.substring(0, 2).toUpperCase()}</span>`
+                                                    }
+                                                    <span class="online-status" style="background: ${userData.status === 'online' ? '#10b981' : '#94a3b8'};"></span>
+                                                </div>
+                                                <div class="user-info">
+                                                    <p>${username}</p>
+                                                    <p class="status ${userData.status}">${userData.status === 'online' ? 'Çevrimiçi' : 'Çevrimdışı'}</p>
+                                                </div>
+                                            `;
+                                            
+                                            // Kullanıcıya tıklandığında sohbet başlat
+                                            userItem.addEventListener('click', () => {
+                                                startChatWithUser(userId);
+                                                searchInput.value = '';
+                                                searchResults.classList.remove('active');
+                                            });
+                                            
+                                            searchResults.appendChild(userItem);
+                                        }
+                                    });
+                                }
+                            }
+                            
+                            if (foundCount === 0) {
+                                searchResults.innerHTML = '<div class="no-results">Kullanıcı bulunamadı</div>';
+                            }
+                        } else {
+                            searchResults.innerHTML = '<div class="no-results">Kullanıcı bulunamadı</div>';
+                        }
+                    });
+                });
+                
+                // Arama alanından çıkıldığında sonuçları gizle
+                searchInput.addEventListener('blur', () => {
+                    setTimeout(() => {
+                        searchResults.classList.remove('active');
+                    }, 200);
+                });
+                
+                searchInput.addEventListener('focus', () => {
+                    if (searchInput.value.trim().length >= 2) {
+                        searchResults.classList.add('active');
+                    }
                 });
             }
             
@@ -1153,7 +1473,7 @@
                 
                 // Enter ile mesaj gönderme
                 messageInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter' && messageInput.value.trim() !== '') {
+                    if (e.key === 'Enter' && messageInput.value.trim() !== '' && currentChatId) {
                         sendMessage(user, messageInput.value);
                         messageInput.value = '';
                     }
@@ -1161,7 +1481,7 @@
                 
                 // Gönder butonu
                 sendButton.addEventListener('click', () => {
-                    if (messageInput.value.trim() !== '') {
+                    if (messageInput.value.trim() !== '' && currentChatId) {
                         sendMessage(user, messageInput.value);
                         messageInput.value = '';
                     }
@@ -1170,26 +1490,30 @@
             
             // Mesaj gönder
             function sendMessage(user, message) {
-                const messages = document.getElementById('messages');
+                if (!currentChatId) {
+                    alert('Lütfen önce bir sohbet seçin');
+                    return;
+                }
                 
-                // Yeni mesajı ekle
-                const messageElement = document.createElement('div');
-                messageElement.className = 'message sent';
-                messageElement.innerHTML = `
-                    ${message}
-                    <div class="message-time">${getCurrentTime()}</div>
-                `;
+                // Yeni mesaj oluştur
+                const newMessage = {
+                    sender: user.uid,
+                    text: message,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
                 
-                messages.appendChild(messageElement);
-                
-                // En aşağı kaydır
-                messages.scrollTop = messages.scrollHeight;
-            }
-            
-            // Saat fonksiyonu
-            function getCurrentTime() {
-                const now = new Date();
-                return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+                // Mesajı veritabanına kaydet
+                db.ref('messages/' + currentChatId).push(newMessage)
+                    .then(() => {
+                        // Sohbetin son mesajını güncelle
+                        db.ref('chats/' + currentChatId).update({
+                            lastMessage: newMessage
+                        });
+                    })
+                    .catch((error) => {
+                        console.error("Mesaj gönderilemedi:", error);
+                        alert("Mesaj gönderilemedi. Lütfen tekrar deneyin.");
+                    });
             }
             
             // Profil menüsü
@@ -1224,10 +1548,13 @@
                 const createGroupBtn = document.getElementById('create-group-btn');
                 const groupPhotoPreview = document.getElementById('group-photo-preview');
                 const groupPhotoInput = document.getElementById('group-photo');
+                const groupSearchInput = document.getElementById('group-search-users');
+                const userList = document.getElementById('user-list');
                 
                 // Yeni grup butonu
                 newGroupBtn.addEventListener('click', () => {
                     newGroupModal.classList.add('active');
+                    loadGroupUsers();
                 });
                 
                 // Kapat butonu
@@ -1259,6 +1586,27 @@
                     }
                 });
                 
+                // Kullanıcı arama
+                groupSearchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.trim().toLowerCase();
+                    
+                    if (searchTerm.length < 2) {
+                        loadGroupUsers();
+                        return;
+                    }
+                    
+                    // Aktif kullanıcıları filtrele
+                    const userItems = userList.querySelectorAll('.user-item');
+                    userItems.forEach(item => {
+                        const username = item.querySelector('p').textContent.toLowerCase();
+                        if (username.includes(searchTerm)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+                
                 // Grup oluşturma
                 createGroupBtn.addEventListener('click', () => {
                     const groupName = document.getElementById('group-name').value;
@@ -1274,24 +1622,118 @@
                         return;
                     }
                     
-                    alert(`"${groupName}" adlı grup oluşturuldu!`);
-                    newGroupModal.classList.remove('active');
+                    // Grup üyeleri
+                    const members = {};
+                    members[currentUser.uid] = true;
                     
-                    // Formu sıfırla
-                    document.getElementById('group-name').value = '';
-                    document.getElementById('group-photo').value = '';
-                    groupPhotoPreview.innerHTML = '<i class="fas fa-camera"></i>';
-                    document.querySelectorAll('.user-item').forEach(item => {
-                        item.classList.remove('selected');
+                    selectedUsers.forEach(userItem => {
+                        const userId = userItem.getAttribute('data-user');
+                        members[userId] = true;
                     });
+                    
+                    // Grup fotoğrafı
+                    let groupPhoto = '';
+                    const imgElement = groupPhotoPreview.querySelector('img');
+                    if (imgElement) {
+                        groupPhoto = imgElement.src;
+                    }
+                    
+                    // Grubu oluştur
+                    const newGroup = {
+                        users: members,
+                        groupName: groupName,
+                        groupPhoto: groupPhoto,
+                        isGroup: true,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    };
+                    
+                    // Yeni sohbet ID'si oluştur
+                    const groupChatId = 'group_' + Date.now();
+                    
+                    // Grubu kaydet
+                    db.ref('chats/' + groupChatId).set(newGroup)
+                        .then(() => {
+                            // Kullanıcıların sohbet listesine ekle
+                            Object.keys(members).forEach(userId => {
+                                db.ref('userChats/' + userId + '/' + groupChatId).set(true);
+                            });
+                            
+                            alert(`"${groupName}" adlı grup oluşturuldu!`);
+                            newGroupModal.classList.remove('active');
+                            
+                            // Formu sıfırla
+                            document.getElementById('group-name').value = '';
+                            document.getElementById('group-photo').value = '';
+                            groupPhotoPreview.innerHTML = '<i class="fas fa-camera"></i>';
+                            document.querySelectorAll('.user-item').forEach(item => {
+                                item.classList.remove('selected');
+                                item.style.display = 'flex';
+                            });
+                            groupSearchInput.value = '';
+                            
+                            // Sohbet listesini güncelle
+                            loadChats(currentUser);
+                        })
+                        .catch((error) => {
+                            console.error("Grup oluşturulamadı:", error);
+                            alert("Grup oluşturulamadı. Lütfen tekrar deneyin.");
+                        });
                 });
                 
                 // Kullanıcı seçimi
-                document.querySelectorAll('.user-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        item.classList.toggle('selected');
+                function loadGroupUsers() {
+                    userList.innerHTML = '<div class="loading">Kullanıcılar yükleniyor...</div>';
+                    
+                    // Tüm kullanıcıları al (kendini hariç)
+                    db.ref('users').once('value', (snapshot) => {
+                        userList.innerHTML = '';
+                        
+                        if (snapshot.exists()) {
+                            const users = snapshot.val();
+                            let count = 0;
+                            
+                            for (const userId in users) {
+                                if (userId === currentUser.uid) continue; // Kendimizi gösterme
+                                
+                                if (count < 20) { // Sadece ilk 20 kullanıcı
+                                    count++;
+                                    const userData = users[userId];
+                                    
+                                    const userItem = document.createElement('div');
+                                    userItem.className = 'user-item';
+                                    userItem.setAttribute('data-user', userId);
+                                    
+                                    userItem.innerHTML = `
+                                        <div class="avatar">
+                                            ${userData.photoURL ? 
+                                                `<img src="${userData.photoURL}" alt="${userData.username}">` : 
+                                                `<span>${userData.username ? userData.username.substring(0, 2).toUpperCase() : '??'}</span>`
+                                            }
+                                            <span class="online-status" style="background: ${userData.status === 'online' ? '#10b981' : '#94a3b8'};"></span>
+                                        </div>
+                                        <div class="user-info">
+                                            <p>${userData.username}</p>
+                                            <p class="status ${userData.status}">${userData.status === 'online' ? 'Çevrimiçi' : 'Çevrimdışı'}</p>
+                                        </div>
+                                    `;
+                                    
+                                    // Kullanıcıya tıklandığında seç/deselect
+                                    userItem.addEventListener('click', () => {
+                                        userItem.classList.toggle('selected');
+                                    });
+                                    
+                                    userList.appendChild(userItem);
+                                }
+                            }
+                            
+                            if (count === 0) {
+                                userList.innerHTML = '<div class="no-results">Kullanıcı bulunamadı</div>';
+                            }
+                        } else {
+                            userList.innerHTML = '<div class="no-results">Kullanıcı bulunamadı</div>';
+                        }
                     });
-                });
+                }
             }
         });
     </script>
