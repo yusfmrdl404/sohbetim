@@ -1,3 +1,10 @@
+// Firebase App (the core Firebase SDK) is always required
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+
+// Add the Firebase services that you want to use
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { getDatabase, ref, set, update, push, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
 // Firebase yapılandırması
 const firebaseConfig = {
   apiKey: "AIzaSyCICiMDhK5MkQDq4dbV_9jkDMt4n3MUpEg",
@@ -9,21 +16,29 @@ const firebaseConfig = {
   appId: "1:277333150871:web:d923f8cddb19ec2f672dd2"
 };
 
-// Firebase'i yükle
-document.addEventListener('DOMContentLoaded', () => {
-  // Firebase scriptlerini dinamik olarak yükle
-  const firebaseScripts = [
-    'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
-    'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js',
-    'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js'
-  ];
+// Firebase'i başlat
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
 
-  firebaseScripts.forEach(src => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    document.body.appendChild(script);
-  });
-  
-  console.log('Firebase konfigürasyonu yüklendi');
+// Auth durumunu takip et
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // Kullanıcı giriş yaptı
+    console.log("Kullanıcı giriş yaptı:", user.email);
+    
+    // Eğer e-posta doğrulanmamışsa çıkış yap
+    if (!user.emailVerified) {
+      alert("Lütfen e-posta adresinizi doğrulayın!");
+      signOut(auth);
+    }
+  } else {
+    // Kullanıcı çıkış yaptı veya giriş yapmadı
+    console.log("Kullanıcı giriş yapmadı");
+  }
 });
+
+// Dışa aktar
+export { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
+         sendEmailVerification, signOut, GoogleAuthProvider, signInWithPopup,
+         ref, set, update, push, onValue, serverTimestamp };
