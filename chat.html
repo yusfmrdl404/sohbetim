@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sohbetim - Sohbetler</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Sohbet ekranı için ek stiller */
+        .chat-container {
+            display: flex;
+            height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 350px;
+            border-right: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #6366f1;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            overflow: hidden;
+        }
+        
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-info h3 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .profile-info p {
+            font-size: 0.9rem;
+            color: #10b981;
+        }
+        
+        .menu-btn {
+            margin-left: auto;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+        
+        .search-box {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 0.95rem;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .actions button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 25px;
+            background: #f0f2f5;
+            color: #1e293b;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .actions button:hover {
+            background: #e4e6eb;
+        }
+        
+        .chats {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+        
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .chat-item:hover {
+            background: #f0f2f5;
+        }
+        
+        .chat-item.active {
+            background: #f0f4ff;
+            border-left-color: #6366f1;
+        }
+        
+        .chat-info {
+            margin-left: 15px;
+            flex: 1;
+        }
+        
+        .chat-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .chat-info p {
+            font-size: 0.9rem;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+        
+        .chat-time {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        
+        .online-status {
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid white;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chat-header .chat-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .chat-header h2 {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+        
+        .chat-header p {
+            font-size: 0.95rem;
+            color: #64748b;
+        }
+        
+        .chat-actions button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: #f0f2f5;
+            color: #1e293b;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .chat-actions button:hover {
+            background: #e4e6eb;
+        }
+        
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #f5f7fb;
+        }
+        
+        .message {
+            max-width: 70%;
+            padding: 12px 15px;
+            border-radius: 18px;
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+        
+        .message.received {
+            background: white;
+            border-bottom-left-radius: 5px;
+            align-self: flex-start;
+        }
+        
+        .message.sent {
+            background: #6366f1;
+            color: white;
+            border-bottom-right-radius: 5px;
+            align-self: flex-end;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+        
+        .welcome-message i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #cbd5e1;
+        }
+        
+        .welcome-message h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #1e293b;
+        }
+        
+        .primary-btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            transition: all 0.2s;
+        }
+        
+        .primary-btn:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+        }
+        
+        .message-input {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid #eee;
+            background: white;
+        }
+        
+        .emoji-btn, .send-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: #f0f2f5;
+            color: #1e293b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+        
+        .send-btn {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .send-btn:hover {
+            background: #4f46e5;
+        }
+        
+        .emoji-btn:hover, .send-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .message-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            background: #f0f2f5;
+            font-size: 1rem;
+        }
+        
+        .message-input input:focus {
+            outline: none;
+        }
+        
+        .user-profile {
+            position: fixed;
+            top: 0;
+            right: -350px;
+            width: 350px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .user-profile.active {
+            right: 0;
+        }
+        
+        .profile-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .profile-header h3 {
+            font-size: 1.3rem;
+        }
+        
+        .close-profile {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #1e293b;
+        }
+        
+        .profile-body {
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .big-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #6366f1;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 3rem;
+            margin: 0 auto 20px;
+            overflow: hidden;
+        }
+        
+        .big-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-body h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .user-id {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+        }
+        
+        .profile-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+        }
+        
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        
+        .label {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        
+        .profile-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .profile-actions button {
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        
+        .profile-actions #edit-profile {
+            background: #f0f2f5;
+            color: #1e293b;
+        }
+        
+        .profile-actions #logout-btn {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+        
+        .profile-actions button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .active-users {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        
+        .active-users h4 {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .active-list {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        
+        .active-user {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+        
+        .active-user .avatar {
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+        
+        .active-user .online-status {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 10px;
+            height: 10px;
+        }
+        
+        .active-user p {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 60px;
+        }
+        
+        .group-members {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        
+        .new-group-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .new-group-modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 400px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            font-size: 1.5rem;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        
+        .photo-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px auto;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .photo-preview i {
+            font-size: 2rem;
+            color: #64748b;
+        }
+        
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .search-users {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .search-users i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+        
+        .search-users input {
+            width: 100%;
+            padding: 10px 10px 10px 40px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 0.95rem;
+        }
+        
+        .user-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .user-item:hover {
+            background: #f0f2f5;
+        }
+        
+        .user-item.selected {
+            background: #f0f4ff;
+        }
+        
+        .user-item .avatar {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            position: relative;
+        }
+        
+        .user-item p {
+            flex: 1;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="profile">
+                    <div class="avatar" id="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-info">
+                        <h3 id="user-name">Yükleniyor...</h3>
+                        <p id="user-status">Çevrimiçi</p>
+                    </div>
+                    <button class="menu-btn" id="settings-btn">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                </div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Kişi veya sohbet ara...">
+                </div>
+                <div class="actions">
+                    <button id="new-chat-btn">
+                        <i class="fas fa-edit"></i> Yeni Sohbet
+                    </button>
+                    <button id="new-group-btn">
+                        <i class="fas fa-users"></i> Yeni Grup
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chats" id="chats-list">
+                <!-- Sohbetler buraya dinamik olarak eklenecek -->
+                <div class="chat-item active" data-chat="default">
+                    <div class="avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="chat-info">
+                        <h3>Örnek Kullanıcı</h3>
+                        <p>Merhaba, nasılsın?</p>
+                    </div>
+                    <div class="chat-time">10:24</div>
+                </div>
+                <div class="chat-item" data-chat="group1">
+                    <div class="avatar" style="background: #10b981;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="chat-info">
+                        <h3>Aile Grubu</h3>
+                        <div class="group-members">
+                            <span>Sen, Ahmet, Ayşe,</span>
+                            <span>+2 daha</span>
+                        </div>
+                    </div>
+                    <div class="chat-time">09:55</div>
+                </div>
+            </div>
+            
+            <div class="active-users">
+                <h4><i class="fas fa-circle" style="color: #10b981;"></i> Aktif Kullanıcılar</h4>
+                <div class="active-list" id="active-users-list">
+                    <!-- Aktif kullanıcılar buraya dinamik olarak eklenecek -->
+                    <div class="active-user">
+                        <div class="avatar">
+                            <i class="fas fa-user"></i>
+                            <span class="online-status"></span>
+                        </div>
+                        <p>Ali</p>
+                    </div>
+                    <div class="active-user">
+                        <div class="avatar">
+                            <i class="fas fa-user"></i>
+                            <span class="online-status"></span>
+                        </div>
+                        <p>Ayşe</p>
+                    </div>
+                    <div class="active-user">
+                        <div class="avatar">
+                            <i class="fas fa-user"></i>
+                            <span class="online-status"></span>
+                        </div>
+                        <p>Mehmet</p>
+                    </div>
+                    <div class="active-user">
+                        <div class="avatar">
+                            <i class="fas fa-user"></i>
+                            <span class="online-status"></span>
+                        </div>
+                        <p>Zeynep</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="chat-header" id="chat-header">
+                <div class="chat-info">
+                    <div class="avatar" id="chat-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <h2 id="chat-name">Örnek Kullanıcı</h2>
+                        <p id="chat-status">Çevrimiçi</p>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button><i class="fas fa-video"></i></button>
+                    <button><i class="fas fa-phone"></i></button>
+                    <button><i class="fas fa-info-circle"></i></button>
+                </div>
+            </div>
+            
+            <div class="messages" id="messages">
+                <div class="message received">
+                    Merhaba! Bugün nasılsın?
+                    <div class="message-time">10:24</div>
+                </div>
+                <div class="message sent">
+                    İyiyim teşekkürler, sen nasılsın?
+                    <div class="message-time">10:25</div>
+                </div>
+                <div class="message received">
+                    Ben de iyiyim, teşekkürler!
+                    <div class="message-time">10:26</div>
+                </div>
+            </div>
+            
+            <div class="message-input">
+                <button class="emoji-btn"><i class="fas fa-smile"></i></button>
+                <input type="text" id="message-input" placeholder="Mesaj yazın...">
+                <button class="send-btn" id="send-message"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+        
+        <div class="user-profile" id="user-profile">
+            <div class="profile-header">
+                <button class="close-profile"><i class="fas fa-arrow-left"></i></button>
+                <h3>Profil</h3>
+            </div>
+            <div class="profile-body">
+                <div class="big-avatar" id="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h2 id="profile-name">Ad Soyad</h2>
+                <p class="user-id" id="profile-id">Kullanıcı ID: Yükleniyor...</p>
+                <div class="profile-stats">
+                    <div class="stat">
+                        <span class="value" id="total-chats">5</span>
+                        <span class="label">Sohbet</span>
+                    </div>
+                    <div class="stat">
+                        <span class="value" id="total-groups">2</span>
+                        <span class="label">Grup</span>
+                    </div>
+                    <div class="stat">
+                        <span class="value" id="message-count">142</span>
+                        <span class="label">Mesaj</span>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button id="edit-profile"><i class="fas fa-edit"></i> Profili Düzenle</button>
+                    <button id="logout-btn"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="new-group-modal" id="new-group-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Yeni Grup Oluştur</h3>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Grup Adı</label>
+                    <input type="text" id="group-name" placeholder="Grup adı girin">
+                </div>
+                <div class="form-group">
+                    <label>Grup Resmi</label>
+                    <input type="file" id="group-photo" accept="image/*" style="display: none;">
+                    <div class="photo-preview" id="group-photo-preview">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Katılacak Kişiler</label>
+                    <div class="search-users">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-users" placeholder="Kişi ara...">
+                    </div>
+                    <div class="user-list" id="user-list">
+                        <!-- Kullanıcılar buraya yüklenecek -->
+                        <div class="user-item" data-user="user1">
+                            <div class="avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <p>Ali Yılmaz</p>
+                        </div>
+                        <div class="user-item" data-user="user2">
+                            <div class="avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <p>Ayşe Kaya</p>
+                        </div>
+                        <div class="user-item" data-user="user3">
+                            <div class="avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <p>Mehmet Demir</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="primary-btn" id="create-group-btn">Grubu Oluştur</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Firebase Config -->
+    <script>
+        // Firebase yapılandırması
+        const firebaseConfig = {
+            apiKey: "AIzaSyCICiMDhK5MkQDq4dbV_9jkDMt4n3MUpEg",
+            authDomain: "sohbetim-9a9d7.firebaseapp.com",
+            databaseURL: "https://sohbetim-9a9d7-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "sohbetim-9a9d7",
+            storageBucket: "sohbetim-9a9d7.firebasestorage.app",
+            messagingSenderId: "277333150871",
+            appId: "1:277333150871:web:d923f8cddb19ec2f672dd2"
+        };
+
+        // Firebase'i başlat
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+    </script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Kullanıcı oturum kontrolü
+            auth.onAuthStateChanged((user) => {
+                if (!user || !user.emailVerified) {
+                    // E-posta doğrulanmamış veya kullanıcı yoksa giriş sayfasına yönlendir
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                // Kullanıcı bilgilerini yükle
+                loadUserData(user);
+                
+                // Sohbetleri yükle
+                loadChats(user);
+                
+                // Aktif kullanıcıları izle
+                setupActiveUsers();
+                
+                // Mesaj gönderme
+                setupMessageSending(user);
+                
+                // Profil menüsü
+                setupProfileMenu();
+                
+                // Grup oluşturma
+                setupGroupCreation(user);
+                
+                // Çıkış yap
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    // Çevrimdışı olarak işaretle
+                    if (user) {
+                        db.ref('onlineUsers/' + user.uid).update({
+                            status: 'offline',
+                            lastSeen: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    }
+                    
+                    // Çıkış yap
+                    auth.signOut().then(() => {
+                        window.location.href = 'index.html';
+                    });
+                });
+            });
+            
+            // Kullanıcı bilgilerini yükle
+            function loadUserData(user) {
+                // Kullanıcı bilgilerini göster
+                document.getElementById('user-name').textContent = user.displayName || user.email.split('@')[0];
+                document
