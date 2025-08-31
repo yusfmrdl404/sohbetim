@@ -230,6 +230,7 @@ body {
     overflow: hidden;
     z-index: 1000;
     animation: slideInUp 0.4s ease;
+    display: none;
 }
 
 .assistant-icon {
@@ -259,16 +260,63 @@ body {
     background: white;
     border-radius: var(--radius);
     overflow: hidden;
-    display: none;
+    display: block;
+}
+
+.chat-header {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.status {
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.status.active {
+    color: var(--success);
+}
+
+.status i {
+    font-size: 0.7rem;
+}
+
+.chat-messages {
+    padding: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .chat-bubble {
+    padding: 12px 15px;
+    border-radius: 18px;
+    max-width: 80%;
+}
+
+.chat-bubble.user {
     background: #f0f2f5;
-    padding: 15px;
-    border-radius: 18px 18px 18px 0;
-    margin: 10px;
-    font-size: 0.95rem;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border-bottom-right-radius: 5px;
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.chat-bubble.ai {
+    background: white;
+    border-bottom-left-radius: 5px;
+    align-self: flex-start;
 }
 
 .chat-input {
@@ -347,6 +395,20 @@ body {
     0% { transform: translateY(-50%) scale(1); }
     50% { transform: translateY(-50%) scale(1.05); }
     100% { transform: translateY(-50%) scale(1); }
+}
+
+/* Yükleniyor */
+.loading {
+    text-align: center;
+    padding: 15px;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.no-results {
+    text-align: center;
+    padding: 15px;
+    color: var(--text-light);
 }
 
 /* Responsive */
