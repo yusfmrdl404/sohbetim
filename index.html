@@ -156,8 +156,8 @@
                                 alert('Lütfen e-posta adresinizi doğrulayın.');
                                 auth.signOut();
                             } else {
-                                // Gerçek uygulamada yönlendirme olur
-                                alert('Giriş başarılı! Gerçek uygulamada sohbet sayfasına yönlendirileceksiniz.');
+                                // Kullanıcıyı sohbet sayfasına yönlendir
+                                window.location.href = 'chat.html';
                             }
                         })
                         .catch((error) => {
@@ -183,7 +183,12 @@
                         auth.signInWithPopup(provider)
                             .then((result) => {
                                 const user = result.user;
-                                alert('Google ile giriş başarılı!');
+                                
+                                // Kullanıcı verilerini veritabanına kaydet
+                                saveUserToDatabase(user);
+                                
+                                // Kullanıcıyı sohbet sayfasına yönlendir
+                                window.location.href = 'chat.html';
                             })
                             .catch((error) => {
                                 alert('Google ile giriş yapılamadı: ' + error.message);
@@ -224,17 +229,7 @@
                                         alert('Kayıt başarılı! Lütfen e-posta adresinize gönderilen doğrulama linkine tıklayarak hesabınızı aktifleştirin.');
                                         
                                         // Kullanıcı verilerini veritabanına kaydet
-                                        const userId = user.uid;
-                                        const username = email.split('@')[0];
-                                        
-                                        db.ref('users/' + userId).set({
-                                            uid: userId,
-                                            email: email,
-                                            displayName: fullName,
-                                            photoURL: `https://api.dicebear.com/7.x/initials/svg?seed=${username}`,
-                                            emailVerified: false,
-                                            createdAt: firebase.database.ServerValue.TIMESTAMP
-                                        });
+                                        saveUserToDatabase(user, fullName);
                                         
                                         // Giriş ekranına yönlendir
                                         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -257,6 +252,30 @@
                             
                             alert(errorMessage);
                         });
+                });
+            }
+            
+            // Kullanıcıyı veritabanına kaydet
+            function saveUserToDatabase(user, fullName = '') {
+                const userId = user.uid;
+                const username = user.email.split('@')[0];
+                
+                db.ref('users/' + userId).set({
+                    uid: userId,
+                    email: user.email,
+                    displayName: fullName || user.displayName || username,
+                    photoURL: user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${username}`,
+                    emailVerified: user.emailVerified,
+                    provider: user.providerData[0].providerId,
+                    lastLogin: firebase.database.ServerValue.TIMESTAMP,
+                    status: 'online',
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                // Aktif kullanıcı listesine ekle
+                db.ref('onlineUsers/' + userId).set({
+                    lastSeen: firebase.database.ServerValue.TIMESTAMP,
+                    status: 'online'
                 });
             }
             
